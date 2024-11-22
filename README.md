@@ -1,215 +1,141 @@
-# The Network Simulator, Version 3
+# Latency map
 
-[![codecov](https://codecov.io/gh/nsnam/ns-3-dev-git/branch/master/graph/badge.svg)](https://codecov.io/gh/nsnam/ns-3-dev-git/branch/master/)
-[![Gitlab CI](https://gitlab.com/nsnam/ns-3-dev/badges/master/pipeline.svg)](https://gitlab.com/nsnam/ns-3-dev/-/pipelines)
-[![Github CI](https://github.com/nsnam/ns-3-dev-git/actions/workflows/per_commit.yml/badge.svg)](https://github.com/nsnam/ns-3-dev-git/actions)
+## Install compiler
+On Linux, g++ can be installed from the distro repository.
+Then verify its installation:
 
-[![Latest Release](https://gitlab.com/nsnam/ns-3-dev/-/badges/release.svg)](https://gitlab.com/nsnam/ns-3-dev/-/releases)
-
-## Table of Contents
-
-* [Overview](#overview-an-open-source-project)
-* [Building ns-3](#building-ns-3)
-* [Testing ns-3](#testing-ns-3)
-* [Running ns-3](#running-ns-3)
-* [ns-3 Documentation](#ns-3-documentation)
-* [Working with the Development Version of ns-3](#working-with-the-development-version-of-ns-3)
-* [Contributing to ns-3](#contributing-to-ns-3)
-* [Reporting Issues](#reporting-issues)
-* [ns-3 App Store](#ns-3-app-store)
-
-> **NOTE**: Much more substantial information about ns-3 can be found at
-<https://www.nsnam.org>
-
-## Overview: An Open Source Project
-
-ns-3 is a free open source project aiming to build a discrete-event
-network simulator targeted for simulation research and education.
-This is a collaborative project; we hope that
-the missing pieces of the models we have not yet implemented
-will be contributed by the community in an open collaboration
-process. If you would like to contribute to ns-3, please check
-the [Contributing to ns-3](#contributing-to-ns-3) section below.
-
-This README excerpts some details from a more extensive
-tutorial that is maintained at:
-<https://www.nsnam.org/documentation/latest/>
-
-## Building ns-3
-
-The code for the framework and the default models provided
-by ns-3 is built as a set of libraries. User simulations
-are expected to be written as simple programs that make
-use of these ns-3 libraries.
-
-To build the set of default libraries and the example
-programs included in this package, you need to use the
-`ns3` tool. This tool provides a Waf-like API to the
-underlying CMake build manager.
-Detailed information on how to use `ns3` is included in the
-[quick start guide](doc/installation/source/quick-start.rst).
-
-Before building ns-3, you must configure it.
-This step allows the configuration of the build options,
-such as whether to enable the examples, tests and more.
-
-To configure ns-3 with examples and tests enabled,
-run the following command on the ns-3 main directory:
-
-```shell
-./ns3 configure --enable-examples --enable-tests
+```bash
+g++ --version
 ```
 
-Then, build ns-3 by running the following command:
+## Install CMake
+Install the latest version of [CMake](https://cmake.org/), downloading it from its website. This is recommended also for Linux since distro repositories can be very outdated. In this case download the .sh script (not the tar.gz file) and install it using the following command ([source](https://youtu.be/_yFPO1ofyF0?feature=shared)):
 
-```shell
+```bash
+sudo sh nomefile.sh --prefix=/usr/local --exclude-subdir
+```
+
+On Windows, during the installation phase, make sure to check the "Add variable to path" (or similar) option, otherwise you will have to do it manually.
+
+## Install Ninja (optional)
+This section is not complete
+
+```bash
+apt get ninja-build
+```
+
+## Download and build
+Download zip of NS3 from its website, uncompress it and move into directory (in VScode open a new window).
+
+```bash
+wget https://www.nsnam.org/release/ns-allinone-3.43.tar.bz2
+tar xjf ns-allinone-3.43.tar.bz2
+cd ns-allinone-3.43/ns-3.43/
+```
+
+Then configure and build and the library
+
+```bash
+./ns3 clean # clean previous build
+./ns3 configure --build-profile=debug --enable-examples --enable-tests
 ./ns3 build
 ```
+If you want to know the current configuration:
 
-By default, the build artifacts will be stored in the `build/` directory.
-
-### Supported Platforms
-
-The current codebase is expected to build and run on the
-set of platforms listed in the [release notes](RELEASE_NOTES.md)
-file.
-
-Other platforms may or may not work: we welcome patches to
-improve the portability of the code to these other platforms.
-
-## Testing ns-3
-
-ns-3 contains test suites to validate the models and detect regressions.
-To run the test suite, run the following command on the ns-3 main directory:
-
-```shell
-./test.py
+```bash
+./ns3 show profile
 ```
 
-More information about ns-3 tests is available in the
-[test framework](doc/manual/source/test-framework.rst) section of the manual.
+## Configure VSCode
+Install VSCode and add the following extensions:
+- C++
+- CMake language support (CMake Tools does not work well with ns3)
 
-## Running ns-3
+Open the folder containing only the ns3 library (e.g. *ns-allinone-3.43/ns-3.43/*) so that is the root folder in the explorer.
 
-On recent Linux systems, once you have built ns-3 (with examples
-enabled), it should be easy to run the sample programs with the
-following command, such as:
+Project configuration and building via CMake should be performed via terminal as eplained previously.
+Be sure to do this before going forward.
 
-```shell
-./ns3 run simple-global-routing
+In order to launch and debug and executable, vscode uses launch configurations that are placed in the launch.json file in the *.vscode* folder.
+These are selectable via the debug menu available in the lateral bar.
+The one that is used is "(gdb) Launch from scratch".
+
+A modification needs to be done so that the executable is found:
+```json
+"program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}-${input:buildType}"// before
+"program": "${workspaceFolder}/build/${relativeFileDirname}/ns3.43-${fileBasenameNoExtension}-${input:buildType}" // after
+```
+Now, with the source file of the executable open, the problem can be run.
+When asked to select the *"build option"* (e.g. default, debug, etc...) pick the same that was used for project configuration.
+As can be seen in the *program* string, this is part of the name of the executable to be run.
+
+### Limitations
+This build configuration uses as "preLaunchTask" to always build the executable before running it.
+As shown in the *task.json* file, this invokes the "./ns3" commmand that re-builds all the modified source files in the project (not only the one you want to run).
+
+It is not possibile to only run the executable without the debugger via the VSCode interface, because this is not supported by the C++ extension ([source](https://github.com/microsoft/vscode-cpptools/issues/3046)).
+The extension functionality used by the debugger is specified in the *"type"* field in the debug configuration:
+
+```bash
+"type": "cppdbg"
 ```
 
-That program should generate a `simple-global-routing.tr` text
-trace file and a set of `simple-global-routing-xx-xx.pcap` binary
-PCAP trace files, which can be read by `tcpdump -n -tt -r filename.pcap`.
-The program source can be found in the `examples/routing` directory.
+### Environmental variables
 
-## Running ns-3 from Python
+To key-value enviromental variables append a new new dictionary containing the keys entries *name* and *value* to the *enviroment* list inside *launch.json*.
+As an example, this is how you can configure the logging level for a component:
 
-If you do not plan to modify ns-3 upstream modules, you can get
-a pre-built version of the ns-3 python bindings.
-
-```shell
-pip install --user ns3
+```json
+{
+	"name": "NS_LOG",
+	"value": "UdpEchoClientApplication=level_all|prefix_func:UdpEchoServerApplication=level_all|prefix_func"
+}
 ```
 
-If you do not have `pip`, check their documents
-on [how to install it](https://pip.pypa.io/en/stable/installation/).
+### Command line arguments
 
-After installing the `ns3` package, you can then create your simulation python script.
-Below is a trivial demo script to get you started.
+Just add the argument string to the *args* list in *launch.json*:
 
-```python
-from ns import ns
-
-ns.LogComponentEnable("Simulator", ns.LOG_LEVEL_ALL)
-
-ns.Simulator.Stop(ns.Seconds(10))
-ns.Simulator.Run()
-ns.Simulator.Destroy()
+```json
+"args": [
+	"--PrintHelp",
+	"--ns3::PointToPointNetDevice::DataRate=5Mbps",
+	"--PrintAttributes=ns3::PointToPointChannel",
+	"--PrintGroup=PointToPoint"
+]
+// these are example of functionalities
+// options are not meant to be used together
 ```
 
-The simulation will take a while to start, while the bindings are loaded.
-The script above will print the logging messages for the called commands.
 
-Use `help(ns)` to check the prototypes for all functions defined in the
-ns3 namespace. To get more useful results, query specific classes of
-interest and their functions e.g., `help(ns.Simulator)`.
+## Traces
 
-Smart pointers `Ptr<>` can be differentiated from objects by checking if
-`__deref__` is listed in `dir(variable)`. To dereference the pointer,
-use `variable.__deref__()`.
+For reading pcap file it is possible to use either tcpdump or Wireshard.
 
-Most ns-3 simulations are written in C++ and the documentation is
-oriented towards C++ users. The ns-3 tutorial programs (`first.cc`,
-`second.cc`, etc.) have Python equivalents, if you are looking for
-some initial guidance on how to use the Python API. The Python
-API may not be as full-featured as the C++ API, and an API guide
-for what C++ APIs are supported or not from Python do not currently exist.
-The project is looking for additional Python maintainers to improve
-the support for future Python users.
-
-## ns-3 Documentation
-
-Once you have verified that your build of ns-3 works by running
-the `simple-global-routing` example as outlined in the [running ns-3](#running-ns-3)
-section, it is quite likely that you will want to get started on reading
-some ns-3 documentation.
-
-All of that documentation should always be available from
-the ns-3 website: <https://www.nsnam.org/documentation/>.
-
-This documentation includes:
-
-* a tutorial
-* a reference manual
-* models in the ns-3 model library
-* a wiki for user-contributed tips: <https://www.nsnam.org/wiki/>
-* API documentation generated using doxygen: this is
-  a reference manual, most likely not very well suited
-  as introductory text:
-  <https://www.nsnam.org/doxygen/index.html>
-
-## Working with the Development Version of ns-3
-
-If you want to download and use the development version of ns-3, you
-need to use the tool `git`. A quick and dirty cheat sheet is included
-in the manual, but reading through the Git
-tutorials found in the Internet is usually a good idea if you are not
-familiar with it.
-
-If you have successfully installed Git, you can get
-a copy of the development version with the following command:
-
-```shell
-git clone https://gitlab.com/nsnam/ns-3-dev.git
+```bash
+tcpdump -nn -tt -r myfirst-0-0.pcap
 ```
 
-However, we recommend to follow the GitLab guidelines for starters,
-that includes creating a GitLab account, forking the ns-3-dev project
-under the new account's name, and then cloning the forked repository.
-You can find more information in the [manual](https://www.nsnam.org/docs/manual/html/working-with-git.html).
+	
+PROBLEMI
+- se rimuovo build dal launch.json succede un casino (solo con cmaketools)
+- troppo lento a compilare (forse solo con cmaketools, che potrebbe limitare workers)
 
-## Contributing to ns-3
 
-The process of contributing to the ns-3 project varies with
-the people involved, the amount of time they can invest
-and the type of model they want to work on, but the current
-process that the project tries to follow is described in the
-[contributing code](https://www.nsnam.org/developers/contributing-code/)
-website and in the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+## Latency experiments
 
-## Reporting Issues
+### Observations
+- a the beginning of file more latency
 
-If you would like to report an issue, you can open a new issue in the
-[GitLab issue tracker](https://gitlab.com/nsnam/ns-3-dev/-/issues).
-Before creating a new issue, please check if the problem that you are facing
-was already reported and contribute to the discussion, if necessary.
+## IMPORTANT
+- filter out non-acked packets
 
-## ns-3 App Store
+## TODO
+- put step in configuration file
+- different types of interferent (connected, not connected)
+- metter a posto -1 e nan
 
-The official [ns-3 App Store](https://apps.nsnam.org/) is a centralized directory
-listing third-party modules for ns-3 available on the Internet.
+## Simualazioni matteo
+- latency-test-2.cc vs latency_test.cc ??? (latency-test-v2/latency-test.cc is the one uses on the server!!!)
+- bug perchè l'interferente non viene messo ad altezza zero, ma ad altezza y
 
-More information on how to submit an ns-3 module to the ns-3 App Store is available
-in the [ns-3 App Store documentation](https://www.nsnam.org/docs/contributing/html/external.html).
