@@ -8,7 +8,8 @@
             "name": "(gdb) Launch from scratch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}-${input:buildType}",
+            //remove build type for release
+            "program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}-${input:buildType}",            
             
             "args": ["single_sim_db963.json", "db.json"],
             "stopAtEntry": false,

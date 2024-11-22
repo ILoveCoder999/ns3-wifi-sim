@@ -1,0 +1,22 @@
+0) 1d block 0 51
+1) 1d block 51 102
+2) 1d block 102 153
+3) 1d block 153 204
+4) 1d block 204 255
+5) 1d block 255 306
+6) 1d block 306 357
+7) 1d block 357 408
+8) 1d block 408 459
+9) 2d block 459 2140
+10) 2d block 2140 3821
+11) 2d block 3821 5502
+12) 2d block 5502 7183
+13) 2d block 7183 8864
+14) 2d block 8864 10545
+15) 2d block 10545 12226
+16) 2d block 12226 13907
+17) 2d block 13907 15588
+18) 2d block 15588 17269
+19) 2d block 17269 18950
+20) 2d block 18950 20631
+20631 simulations
