@@ -152,6 +152,7 @@ main(int argc, char** argv) {
 
     *outputFile->GetStream() << "[" << std::endl << json(args);
 
+    // Create containers for AP, STA and Interferent nodes
     NodeContainer wifiApNodes;
     wifiApNodes.Create(args.apNodes.size());
     NodeContainer wifiStaNode;
@@ -159,6 +160,8 @@ main(int argc, char** argv) {
     NodeContainer wifiInterfererNodes;
     wifiInterfererNodes.Create(args.interfererNodes.size());
 
+    // Create spectrum helpers for different physical configuration
+    // (only one will be selected for the simulation)
     std::unordered_map<std::string, long unsigned int> apNodesLookup;
     std::vector<SpectrumWifiPhyHelper> spectrumPhys;
     for (auto &phyConfig : args.phyConfigs)
@@ -347,3 +350,30 @@ main(int argc, char** argv) {
     Simulator::Destroy();
     return 0;
 }
+
+
+
+/*NOTES
+https://www.nsnam.org/docs/models/html/wifi-design.html
+https://www.nsnam.org/docs/models/html/wifi-user.html
+
+
+PHYSICAL SETTINGS (https://www.nsnam.org/docs/models/html/wifi-design.html#phy-layer-models):
+- "ns3::LogDistancePropagationLossModel" (reception power)
+- "ns3::ConstantSpeedPropagationDelayModel" (costant propation in medium)
+- "{44,20,BAND_5GHZ,0}" ({CHANNEL_NUM, CHANNEL SETTINGS)
+
+MAC SETTINGS:
+
+
+
+
+
+wifi -> WIFI_STANDARD_80211a
+
+ "channelSettings": "{44,20,BAND_5GHZ,0}",
+      "channel": {
+        
+
+
+*/
