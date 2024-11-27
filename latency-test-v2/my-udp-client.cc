@@ -17,6 +17,10 @@
  * Author: Amine Ismail <amine.ismail@sophia.inria.fr>
  *                      <amine.ismail@udcast.com>
  */
+
+// Customized from src/applications/model/udp-client.cc (added Jitter)
+// - see CUSTOM comments
+
 #include "my-udp-client.h"
 
 #include "ns3/pointer.h"
@@ -63,7 +67,7 @@ MyUdpClient::GetTypeId()
                           TimeValue(Seconds(1.0)),
                           MakeTimeAccessor(&MyUdpClient::m_interval),
                           MakeTimeChecker())
-            .AddAttribute("IntervalJitter",
+            .AddAttribute("IntervalJitter", // CUSTOM
                           "The time to wait between packets",
                           StringValue("ns3::ConstantRandomVariable"),
                           MakePointerAccessor(&MyUdpClient::m_intervalJitter),
@@ -253,6 +257,7 @@ MyUdpClient::Send()
 
     if (m_sent < m_count || m_count == 0)
     {
+         // CUSTOM (added jitter)
         m_sendEvent = Simulator::Schedule(m_interval + Seconds(m_intervalJitter->GetValue()), &MyUdpClient::Send, this);
     }
 }

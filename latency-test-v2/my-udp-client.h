@@ -19,6 +19,9 @@
  *
  */
 
+// Customized from src/applications/model/udp-client.h (added Jitter)
+// - see CUSTOM comments
+
 #ifndef MY_UDP_CLIENT_H
 #define MY_UDP_CLIENT_H
 
@@ -27,7 +30,7 @@
 #include "ns3/event-id.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/ptr.h"
-#include "ns3/random-variable-stream.h"
+#include "ns3/random-variable-stream.h" // CUSTOM
 #include <ns3/traced-callback.h>
 
 namespace ns3
@@ -90,7 +93,7 @@ class MyUdpClient : public Application
 
     uint32_t m_count; //!< Maximum number of packets the application will send
     Time m_interval;  //!< Packet inter-send time
-    Ptr<RandomVariableStream> m_intervalJitter; //!< Interval jitter
+    Ptr<RandomVariableStream> m_intervalJitter; //!< Interval jitter (CUSTOM)
     uint32_t m_size;  //!< Size of the sent packet (including the SeqTsHeader)
 
     uint32_t m_sent;       //!< Counter for sent packets

@@ -42,6 +42,7 @@ using namespace ns3;
 
 std::unordered_map<uint32_t, PacketInfo> packets;
 
+// Callback for ACK
 void
 AckedMpduCallback(Ptr<OutputStreamWrapper> out,
                   Ptr<const WifiMpdu> mpdu)
@@ -50,7 +51,7 @@ AckedMpduCallback(Ptr<OutputStreamWrapper> out,
     LlcSnapHeader llcSnapHeader;
     Ipv4Header ipv4Header;
     UdpHeader udpHeader;
-    SeqTsHeader seqTsHeader;
+    SeqTsHeader seqTsHeader;    
     if (p->GetSize() > 0 && p->RemoveHeader(llcSnapHeader) && p->RemoveHeader(ipv4Header) && p->RemoveHeader(udpHeader) && p->RemoveHeader(seqTsHeader))
     {
         PacketInfo info {seqTsHeader.GetSeq()};
@@ -66,12 +67,12 @@ AckedMpduCallback(Ptr<OutputStreamWrapper> out,
     }
 }
 
+// Callback for retransmission
 void
 MpduTimeoutCallback(uint8_t reason,
                     Ptr<const WifiMpdu> mpdu,
                     const WifiTxVector& txVector)
 {
-    // Avviene nel caso di una ritrasmissione
     Ptr<Packet> p = mpdu->GetPacket()->Copy();
     LlcSnapHeader llcSnapHeader;
     Ipv4Header ipv4Header;
@@ -93,6 +94,7 @@ MpduTimeoutCallback(uint8_t reason,
     }
 }
 
+// Callback for dropped packet
 void
 DroppedMpduCallback(Ptr<OutputStreamWrapper> out,
                     WifiMacDropReason reason,
@@ -152,7 +154,7 @@ main(int argc, char** argv) {
 
     *outputFile->GetStream() << "[" << std::endl << json(args);
 
-    // Create containers for AP, STA and Interferent nodes
+    // Create node containers for AP, STA and interferers
     NodeContainer wifiApNodes;
     wifiApNodes.Create(args.apNodes.size());
     NodeContainer wifiStaNode;
@@ -162,11 +164,10 @@ main(int argc, char** argv) {
 
     // Create spectrum helpers for different physical configuration
     // (only one will be selected for the simulation)
-    std::unordered_map<std::string, long unsigned int> apNodesLookup;
     std::vector<SpectrumWifiPhyHelper> spectrumPhys;
     for (auto &phyConfig : args.phyConfigs)
     {
-        ObjectFactory factory;
+        ObjectFactory factory; // used to create objects from their name (useful for json configuration)
         SpectrumWifiPhyHelper spectrumPhyHelper;
         factory.SetTypeId(phyConfig.channel.propagationLossModel);
         Ptr<SpectrumChannel> spectrumChannel = CreateObject<MultiModelSpectrumChannel>();
@@ -190,6 +191,7 @@ main(int argc, char** argv) {
     NetDeviceContainer apDevices;
     NetDeviceContainer interfererDevices;
 
+    // Set station manager (rate adaptation algorithms, e.g. Minstral)
     if (args.staNode.remoteStationManager == "ns3::ConstantRateWifiManager")
     {
         wifi.SetRemoteStationManager(args.staNode.remoteStationManager,
@@ -204,14 +206,19 @@ main(int argc, char** argv) {
             "RtsCtsThreshold", UintegerValue(args.staNode.rtsCtsThreshold));
     }
 
+    // Configure WiFi for STA (with beacons)
+    // Install on STA node together with spectrum
     wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(args.staNode.ssid));
     staDevice = wifi.Install(spectrumPhys[args.staNode.phyId], wifiMac, wifiStaNode);
 
+    // Configure and install STA Wifi on interferers
     for (long unsigned int i = 0;i < args.interfererNodes.size();i++)
     {
         const auto& interfererConfig = args.interfererNodes[i];
         const auto wifiInterferentNode = wifiInterfererNodes.Get(i);
+        // Use STA WiFi config
         wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(interfererConfig.ssid));
+        // Set rate adaptation algorithm
         if (interfererConfig.remoteStationManager == "ns3::ConstantRateWifiManager")
         {
             wifi.SetRemoteStationManager(interfererConfig.remoteStationManager,
@@ -228,6 +235,10 @@ main(int argc, char** argv) {
         interfererDevices.Add(wifi.Install(spectrumPhys[interfererConfig.phyId], wifiMac, wifiInterferentNode));
     }
 
+    // Map SSID to node number for APs
+    std::unordered_map<std::string, long unsigned int> apNodesLookup;
+
+    // Configure WiFi for APs
     for (long unsigned int i = 0;i < args.apNodes.size();i++)
     {
         const auto& apConfig = args.apNodes[i];
@@ -238,6 +249,7 @@ main(int argc, char** argv) {
         apNodesLookup.insert({ apConfig.ssid, i });
     }
 
+    // Enable pcap on all nodes (physical layer)
     if (args.enablePcap)
     {
         for (auto &spectrumPhy : spectrumPhys)
@@ -255,7 +267,7 @@ main(int argc, char** argv) {
         spectrumPhys[args.staNode.phyId].EnablePcap(args.pcapPrefix + "latency-test-sta", staDevice);
     }
 
-    MobilityHelper mobility;
+    // Create vector of position for APs, STA, and interferers
     Ptr<ListPositionAllocator> positionAllocator = CreateObject<ListPositionAllocator>();
     for (const auto &apConfig : args.apNodes)
     {
@@ -266,21 +278,26 @@ main(int argc, char** argv) {
 
     for (const auto &interfererConf : args.interfererNodes)
     {
-        positionAllocator->Add(Vector(interfererConf.position.x, interfererConf.position.y, interfererConf.position.y));
+        positionAllocator->Add(Vector(interfererConf.position.x, interfererConf.position.y, interfererConf.position.z));
     }
 
+    // Configure mobility model (with type and vector of positions)
+    MobilityHelper mobility;
     mobility.SetPositionAllocator(positionAllocator);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 
+    // Install mobility model on nodes (probably goes through the vector of positions)
     mobility.Install(wifiApNodes);
     mobility.Install(wifiStaNode);
     mobility.Install(wifiInterfererNodes);
 
+    // Install internet stack
     InternetStackHelper internetStack;
     internetStack.Install(wifiApNodes);
     internetStack.Install(wifiStaNode);
     internetStack.Install(wifiInterfererNodes);
 
+    // Configure IP addresses on same subnet
     Ipv4AddressHelper ipv4Address;
     ipv4Address.SetBase("192.168.1.0", "255.255.255.0");
     Ipv4InterfaceContainer apNodesInterfaces;
@@ -291,15 +308,18 @@ main(int argc, char** argv) {
     staNodeInterface = ipv4Address.Assign(staDevice);
     interfererNodesInterfaces = ipv4Address.Assign(interfererDevices);
 
+    // Install applications on nodes
     ApplicationContainer clientApp;
     ApplicationContainer serverApp;
     ApplicationContainer interfererApps;
 
+    // UDP server on APs (set start time)
     UdpServerHelper server(port);
     serverApp = server.Install(wifiApNodes);
     serverApp.Start(Seconds(1.0));
     serverApp.Stop(Seconds(args.simulationTime + 1));
 
+    // Custom UDP client on STA
     MyUdpClientHelper client(apNodesInterfaces.GetAddress(apNodesLookup[args.staNode.ssid]), port);
     client.SetAttribute("MaxPackets", UintegerValue(4294967295U));
     client.SetAttribute("Interval", TimeValue(Seconds(args.staNode.packetInterval)));
@@ -309,6 +329,7 @@ main(int argc, char** argv) {
     clientApp.Start(Seconds(1.0));
     clientApp.Stop(Seconds(args.simulationTime + 1));
 
+    // Custom UDP client on interferers
     InterfererApplicationHelper interfererHelper;
     for (long unsigned int i = 0;i < args.interfererNodes.size();i++)
     {
@@ -323,23 +344,30 @@ main(int argc, char** argv) {
     interfererApps.Start(Seconds(1.0));
     interfererApps.Stop(Seconds(args.simulationTime + 1));
 
+    // Tracing for acked packets
     std::stringstream ss;
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/AckedMpdu";
     Config::ConnectWithoutContext(ss.str(), MakeBoundCallback(&AckedMpduCallback, outputFile));
 
+    // Tracing for response timeout
     ss.str(std::string());
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/MpduResponseTimeout";
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&MpduTimeoutCallback));
 
+    // Tracing for dropped packets
     ss.str(std::string());
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/DroppedMpdu";
     Config::ConnectWithoutContext(ss.str(), MakeBoundCallback(&DroppedMpduCallback, outputFile));
 
+    // DOES NOT WORK IN DEBUG (ONLY IN RELEASE)
     PopulateArpCache();
 
+    // Start simulation
     Simulator::Stop(Seconds(args.simulationTime + 1));
     auto start = std::chrono::high_resolution_clock::now();
     Simulator::Run();
+
+    // Log duration of simulation
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
 
@@ -351,9 +379,9 @@ main(int argc, char** argv) {
     return 0;
 }
 
-
-
 /*NOTES
+
+NS3 WiFi documentation
 https://www.nsnam.org/docs/models/html/wifi-design.html
 https://www.nsnam.org/docs/models/html/wifi-user.html
 
@@ -361,19 +389,51 @@ https://www.nsnam.org/docs/models/html/wifi-user.html
 PHYSICAL SETTINGS (https://www.nsnam.org/docs/models/html/wifi-design.html#phy-layer-models):
 - "ns3::LogDistancePropagationLossModel" (reception power)
 - "ns3::ConstantSpeedPropagationDelayModel" (costant propation in medium)
-- "{44,20,BAND_5GHZ,0}" ({CHANNEL_NUM, CHANNEL SETTINGS)
+- "{44,20,BAND_5GHZ,0}" ({CHANNEL_NUM, CHANNEL_WIDTH_MHZ, FREQ_BAND, Che sottocanale da 20 è il primario)
 
-MAC SETTINGS:
+WIFI STANDARD:
+- WIFI_STANDARD_80211a (vecchio per disabilitare tutte le features, e.g. frame aggregation)
 
+HIGH-MAC MODELS
+- ns3::WifiMac
+    - Access Point (AP) (ns3::ApWifiMac)
+        - generates periodic beacons
+        - accepts every attempt to associate
+    - non-AP Station (STA) (ns3::StaWifiMac)
+        - active probing
+        - automatic re-association if beacons are missed
+    - STA in an Independent Basic Service Set (IBSS) aka "ad hoc network" (ns3::AdhocWifiMac)   
+        - no probing, beacon, or association
+- Rate control algorithms (remoteStationManager):
+    - types
+        - ns3::ConstantRateWifiManager
+        - ns3::MinstrelHtWifiManager (X)
+    - attributes
+        - MaxSsrc = 21 (maximun number of transmission attempts of packets with size below RtsCtsThreshold)
+        - RtsCtsThreshold = 4692480 (threshold to packet size before using RtsCts)
+        - DataMode (WifiMode) = OfdmRate6Mbps (ONLY for constant rate wifi)
 
+MOBILITY
+- ns3::ConstantPositionMobilityModel
 
+STA application (my-udp-client, TAKEN FROM THE INTERNET):
+- MaxPackets (maximum number of packets, zero is infinite)
+- Interval (time in-between packets in seconds)
+    - 0.5
+- IntervalJitter (variation of interval in seconds)
+    - ns3::UniformRandomVariable[Min=-0.000025|Max=0.000075]
+- PacketSize
+    - 22
 
-
-wifi -> WIFI_STANDARD_80211a
-
- "channelSettings": "{44,20,BAND_5GHZ,0}",
-      "channel": {
-        
-
+Interferent Application (my-udp-client, written by Matteo):
+- PeerAddress (address of access point)
+- OffTime (time between burst in seconds)
+    - ns3::ExponentialRandomVariable[Mean=0.25|Bound=10]
+- BurstSize (number of packets in burst)
+    - ns3::ExponentialRandomVariable[Mean=100|Bound=500]
+- BurstPacketsInterval
+    - 500 microseconds (default in arg structure)
+- BurstPacketsSize
+    - 1500 (size of packets in the burst)
 
 */

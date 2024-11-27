@@ -2,6 +2,11 @@
 // Created by matteo on 26/07/24.
 //
 
+/* FROM:
+- https://groups.google.com/g/ns-3-users/c/L_ZfZ9L1_b0/m/dCuzc859ENcJ
+- https://gist.github.com/SzymonSzott/de5c431d687f7b3a0b10743af6ac7ce2
+*/
+
 #include "utils.h"
 
 #include "ns3/pointer.h"
@@ -62,7 +67,20 @@ PopulateArpCache()
 
                 // Creates an ARP entry for this Ipv4Address and adds it to the ARP Cache
                 ArpCache::Entry* entry = arp->Add(ipAddr);
-                entry->MarkAlive(addr);
+
+                /*CLUSTER VERSION (fails in DEBUG because the function asserts that the entry is in WAIT_REPLY)*/                
+                //entry->MarkAlive(addr);
+
+                /*ORIGINAL VERSION (simulates the waiting for an ARP response, then marks entry alive)*/
+				// Ipv4Header ipv4Hdr;
+				// ipv4Hdr.SetDestination (ipAddr);
+				// Ptr<Packet> p = Create<Packet> (100);
+				// entry->MarkWaitReply (ArpCache::Ipv4PayloadHeaderPair (p, ipv4Hdr));
+				// entry->MarkAlive (addr);               
+
+                /*MATTEO VERSION NEW (adds the entry as static)*/
+                entry->SetMacAddress(addr);
+                entry->MarkPermanent();
 
                 NS_LOG_UNCOND("Arp Cache: Adding the pair (" << addr << "," << ipAddr << ")");
             }

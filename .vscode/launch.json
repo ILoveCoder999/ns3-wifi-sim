@@ -8,10 +8,10 @@
             "name": "(gdb) Launch from scratch",
             "type": "cppdbg",
             "request": "launch",
-            //remove build type for release
-            "program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}-${input:buildType}",            
+            //"program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}-${input:buildType}", //debug
+            "program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}", //release    
             
-            "args": ["single_sim_db963.json", "db.json"],
+            "args": ["latency-test-v2/test_ap_pcap/single_sim_conf.json", "latency-test-v2/test_ap_pcap/db.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build",
