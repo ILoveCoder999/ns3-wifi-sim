@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "ns3/application-container.h"
 #include "ns3/arp-cache.h"
@@ -124,27 +125,40 @@ int
 main(int argc, char** argv) {
     constexpr uint32_t port = 9;
     std::string outFilePath = "db0.json";
-    std::string argfile = "conf.json";
-    Arguments args;
+    std::string jsonConfig = "conf.json";    
+    bool inlineConfig = false;
 
     CommandLine cmd(__FILE__);
-    cmd.AddNonOption("jsonConfig", "Json configuration", argfile);
-    cmd.AddNonOption("outFilePath", "Output file path", outFilePath);
+    cmd.AddValue("jsonConfig", "Json configuration", jsonConfig);
+    cmd.AddValue("outFilePath", "Output file path", outFilePath);
+    cmd.AddValue("inlineConfig", "Provide config inline", inlineConfig);
     cmd.Parse(argc, argv);
 
-    if (argc < 3)
-    {
-        std::cerr << "Missing parameters" << std::endl;
-        return 1;
-    }
+    std::cout << jsonConfig << " " << outFilePath << " " << inlineConfig << std::endl;
 
-    std::ifstream arg_file;  
-    arg_file.open(argfile.c_str(), std::ios::in);
-    if(!arg_file)
+    // if (argc < 3)
+    // {
+    //     std::cerr << "Missing parameters" << std::endl;
+    //     return 1;
+    // }
+
+    Arguments args;
+
+    if(inlineConfig)
     {
-        return 2;
+        std::stringstream conf_stream(jsonConfig);
+        conf_stream >> args;
+    }
+    else {
+        std::ifstream arg_file;  
+        arg_file.open(jsonConfig.c_str(), std::ios::in);
+        if(!arg_file)
+        {
+            return 2;
+        }
+        arg_file >> args;        
     } 
-    arg_file >> args;
+    
 
     AsciiTraceHelper asciiHelper;
     Ptr<OutputStreamWrapper> outputFile = asciiHelper.CreateFileStream(outFilePath, std::ios::out | std::ios::trunc);

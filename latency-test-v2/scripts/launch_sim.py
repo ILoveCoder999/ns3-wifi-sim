@@ -4,13 +4,86 @@ import subprocess
 from pathlib import Path
 from utils.V2 import JsonConfig
 from dataclasses import asdict
+import signal
+import sys
 
-BASE = "/home/ptrchv/repos/latency_map/ns-3-dev-ben"
+BASE = "/home/ptrchv/repos/ns3-wifi-sim"
 
-PROGRAM = "build/latency-test-v2/ns3-dev-latency-test-v2-debug"
-CONF_FILE = "latency-test-v2/scripts/single_sim_conf.json"
-OUTPATH = "db_test.json"
+#PROGRAM = "build/latency-test-v2/ns3-dev-latency-test-v2-debug"
+PROGRAM = "build/latency-test-v2/ns3-dev-latency-test-v2-optimized"
 
+#CONF_FILE = "latency-test-v2/test_beacons_ap/test_beacons_ap.json"
+#OUT_FOLDER = "latency-test-v2/test_beacons_ap"
+
+CONF_FILE = "latency-test-v2/test_interferer_map/test_interferer_map.json"
+OUT_FOLDER = "latency-test-v2/test_interferer_map/sim_res"
+
+
+# CONF_FILE = "latency-test-v2/test_simple_conf/single_sim_conf_list.json"
+# OUT_FOLDER = "latency-test-v2/test_simple_conf/sim_res"
+
+OUT_PREFIX = "db"
+
+
+class ProcessBatch:
+    def __init__(self, batch_size):
+        self._to_start = 0
+        self._cmds = []
+        self._procs = []
+        self._batch_size = batch_size
+
+        # https://docs.python.org/3/faq/programming.html#why-do-lambdas-defined-in-a-loop-with-different-values-all-return-the-same-result
+        signal.signal(signal.SIGINT, lambda sig_num, frame: self.kill_procs()) 
+
+    def add_command(self, cmd):
+        self._cmds.append(cmd)   
+
+    def start(self):
+        n_start = self._batch_size if self._batch_size < len(self._cmds) else len(self._cmds)
+        for _ in range(n_start):
+             if self._start_proc():
+                print("Started process {}".format(self._to_start - 1))           
+
+        while self._procs:
+            proc = self._wait_proc()
+            print("Process {} finished with return code {}".format(self._num_older_proc, proc.returncode))
+            # print(p.stdout)
+            # print(p.stderr)            
+            if self._start_proc():
+                print("Started process {}".format(self._to_start - 1))
+
+    def kill_procs(self):
+        while self._procs:
+            proc = self._kill_proc()            
+            print("Process {} terminated".format(self._num_older_proc-1))
+        sys.exit()
+
+    def __len__(self):
+        return len(self._cmds)
+    
+    def _start_proc(self):
+        if not (self._to_start < len(self._cmds)):
+            return False        
+        cmd = self._cmds[self._to_start]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
+        self._procs.append(proc)
+        self._to_start+=1
+        return True    
+
+    def _wait_proc(self):
+        self._procs[0].wait()
+        return self._procs.pop(0)
+
+    def _kill_proc(self):
+        self._procs[0].kill()
+        return self._procs.pop(0)
+
+    @property
+    def _num_older_proc(self):
+        return self._to_start - len(self._procs)
+
+
+BATCH_SIZE = 40
 
 def main():
     # parser = argparse.ArgumentParser(
@@ -25,53 +98,36 @@ def main():
 
     program = Path(BASE) / PROGRAM
     conf_file = Path(BASE) / CONF_FILE
-    outpath = Path(BASE) / OUTPATH
 
-    print(program)
-    print(conf_file)
-    print(outpath)
+    (Path(BASE) / Path(OUT_FOLDER)).mkdir(parents=True, exist_ok=True)
 
     with open(conf_file) as f:
-        jconf = JsonConfig(json.load(f))
-    
-    sim_conf = json.dumps(asdict(jconf), separators=(',', ':'))
+        json_configs = json.load(f)
 
-    command = [
-                str(program), 
-                sim_conf, 
-                str(outpath)
-            ]
-    
-    # print(command)
-    # print(" ".join(command))
+    process_batch = ProcessBatch(BATCH_SIZE)
+    for idx, jconf in enumerate(json_configs):
 
-    output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
-    #print(output.stdout.decode('utf-8'))
-    print(output.returncode)
-    print(output.stdout)
-    print(output.stderr)
+        jconf = JsonConfig(**jconf)
+        sim_conf = json.dumps(asdict(jconf), separators=(',', ':'))
+        outpath = Path(BASE) / OUT_FOLDER / "{}_{}.json".format(OUT_PREFIX, idx)
 
-
-
-    
+        command = [
+                    str(program),
+                    '--jsonConfig={}'.format(sim_conf),
+                    '--outFilePath={}'.format(str(outpath)),
+                    "--inlineConfig"
+                ]
+        process_batch.add_command(command)
     
 
+    print("{} simulations to run".format(len(process_batch)))
+
+    process_batch.start()
 
 
-#     with open("") as f:
-        
-#         parser = argparse.ArgumentParser(prog='myprogram')
-
-# parser.add_argument('--foo', help='foo of the %(prog)s program')
-
-# parser.print_help()
-
-#     executable = Path(__file__).parent.joinpath("../../build/latency-test-v2/ns3-dev-latency-test-v2-optimized").resolve()
-#     config = json.dumps(asdict(sim), separators=(',', ':'))
-#     out_file = Path(args.out_dir).joinpath(LATENCY_FILE.format(i))
-     
-#     ciao f"{executable} '{config}' {out_file}"
-
+    # PER FARLO MIGLIORE
+    # https://stackoverflow.com/questions/26774781/python-multiple-subprocess-with-a-pool-queue-recover-output-as-soon-as-one-finis
+    # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
 
 
 if __name__ == "__main__":

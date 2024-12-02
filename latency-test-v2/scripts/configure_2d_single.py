@@ -265,37 +265,47 @@ SIMULATIONS_2D = [
     ])
 ]
 
-
 SIMULATION_TIME = 30000
-CONFIG_NUM = 0
-STA_POS = (2.5, 2.5)
+#CONFIG_NUM = 9
+CONFIG_NUM = 5
+STA_POS = [(-15, 0), (30, 0), (1, 0)]
+CONF_FILE_NAME = "./test_interferer_map.json"
+
 
 def main():
     apNodes, interfererNodes = SIMULATIONS_2D[CONFIG_NUM]
 
-    single_config = JsonConfig(
-        phyConfigs=[
-            SpectrumPhyConfig(
-                channelSettings="{44,20,BAND_5GHZ,0}",
-                channel=SpectrumChannelConfig(
-                    propagationLossModel="ns3::LogDistancePropagationLossModel",
-                    propagationDelayModel="ns3::ConstantSpeedPropagationDelayModel"
-                )
-            )
-        ],
-        staNode=StaConfig(
-            position=Position(x=STA_POS[0], y=STA_POS[1]),
-            payloadSize=22,  # Per avere il pacchetto della stessa dimensione del caso reale
-            ssid="ssid_1",
-            phyId=0
-        ),
-        apNodes=apNodes,
-        interfererNodes=interfererNodes,
-        simulationTime=SIMULATION_TIME
-    )
+    configs = []
 
-    with open("./single_sim_conf.json", "w") as f:
-        json.dump(asdict(single_config), f, indent=2)
+    #for pos in STA_POS:
+    for staX in float_range(-50, 50, 2.5, inclusive=True):
+        for staY in float_range(-50, 50, 2.5, inclusive=True):
+            pos = (staX, staY)
+
+            single_config = JsonConfig(
+                phyConfigs=[
+                    SpectrumPhyConfig(
+                        channelSettings="{44,20,BAND_5GHZ,0}",
+                        channel=SpectrumChannelConfig(
+                            propagationLossModel="ns3::LogDistancePropagationLossModel",
+                            propagationDelayModel="ns3::ConstantSpeedPropagationDelayModel"
+                        )
+                    )
+                ],
+                staNode=StaConfig(
+                    position=Position(x=pos[0], y=pos[1]),
+                    payloadSize=22,  # Per avere il pacchetto della stessa dimensione del caso reale
+                    ssid="ssid_1",
+                    phyId=0
+                ),
+                apNodes=apNodes,
+                interfererNodes=interfererNodes,
+                simulationTime=SIMULATION_TIME
+            )
+            configs.append(asdict(single_config))
+
+        with open(CONF_FILE_NAME, "w") as f:
+            json.dump(configs, f, indent=2)
 
 if __name__ == "__main__":
     main()
