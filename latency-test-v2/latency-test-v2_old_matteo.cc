@@ -41,47 +41,12 @@ using json = nlohmann::json;
 
 using namespace ns3;
 
+std::unordered_map<uint32_t, PacketInfo> packets;
 
-class STALogger
-{
-    public:
-        STALogger(std::string outFilePath, Arguments args);
-
-        void logHeader();
-        void logFooter(std::chrono::seconds);       
-
-        // callbacks
-        void ackedMpduCallback(Ptr<const WifiMpdu> mpdu);
-        void mpduTimeoutCallback(uint8_t reason, Ptr<const WifiMpdu> mpdu, const WifiTxVector& txVector);
-        void droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu> mpdu);
-    
-    private:
-        std::unordered_map<uint32_t, PacketInfo> _packets;
-        std::ofstream _output_file;
-        Arguments _args;
-};
 // Callback for ACK
-
-
-STALogger::STALogger(std::string out_file_path, Arguments args): _args(args)
-{
-    AsciiTraceHelper asciiHelper;
-    _output_file.open(out_file_path.c_str(), std::ios::out | std::ios::trunc);
-}
-
-void STALogger::logHeader()
-{
-    _output_file << "[" << std::endl << json(_args);
-}
-
-void STALogger::logFooter(std::chrono::seconds duration)
-{
-    _output_file << "," << std::endl << json({
-        {"elapsed_seconds",  duration.count()}
-    }) << std::endl << "]";
-}
-
-void STALogger::ackedMpduCallback(Ptr<const WifiMpdu> mpdu)
+void
+AckedMpduCallback(Ptr<OutputStreamWrapper> out,
+                  Ptr<const WifiMpdu> mpdu)
 {
     Ptr<Packet> p = mpdu->GetPacket()->Copy();
     LlcSnapHeader llcSnapHeader;
@@ -91,20 +56,23 @@ void STALogger::ackedMpduCallback(Ptr<const WifiMpdu> mpdu)
     if (p->GetSize() > 0 && p->RemoveHeader(llcSnapHeader) && p->RemoveHeader(ipv4Header) && p->RemoveHeader(udpHeader) && p->RemoveHeader(seqTsHeader))
     {
         PacketInfo info {seqTsHeader.GetSeq()};
-        const auto it = _packets.find(seqTsHeader.GetSeq());
-        if (it != _packets.end())
+        const auto it = packets.find(seqTsHeader.GetSeq());
+        if (it != packets.end())
         {
             info = it->second;
         }
         info.acked = true;
         info.latency = Simulator::Now() - seqTsHeader.GetTs();
-        _output_file << ", " << std::endl << json(info);
-        _packets.erase(it, _packets.end());
+        *out->GetStream() << ", " << std::endl << json(info);
+        packets.erase(it, packets.end());
     }
 }
 
 // Callback for retransmission
-void STALogger::mpduTimeoutCallback(uint8_t reason, Ptr<const WifiMpdu> mpdu, const WifiTxVector& txVector)
+void
+MpduTimeoutCallback(uint8_t reason,
+                    Ptr<const WifiMpdu> mpdu,
+                    const WifiTxVector& txVector)
 {
     Ptr<Packet> p = mpdu->GetPacket()->Copy();
     LlcSnapHeader llcSnapHeader;
@@ -114,8 +82,8 @@ void STALogger::mpduTimeoutCallback(uint8_t reason, Ptr<const WifiMpdu> mpdu, co
     if (p->GetSize() > 0 && p->RemoveHeader(llcSnapHeader) && p->RemoveHeader(ipv4Header) && p->RemoveHeader(udpHeader) && p->RemoveHeader(seqTsHeader))
     {
         PacketInfo info {seqTsHeader.GetSeq()};
-        auto it = _packets.find(seqTsHeader.GetSeq());
-        if (it != _packets.end())
+        auto it = packets.find(seqTsHeader.GetSeq());
+        if (it != packets.end())
         {
             info = it->second;
         }
@@ -123,12 +91,15 @@ void STALogger::mpduTimeoutCallback(uint8_t reason, Ptr<const WifiMpdu> mpdu, co
             txVector.GetMode().GetDataRate(txVector),
             Simulator::Now() - seqTsHeader.GetTs()
         });
-        _packets.insert_or_assign(seqTsHeader.GetSeq(), info);
+        packets.insert_or_assign(seqTsHeader.GetSeq(), info);
     }
 }
 
 // Callback for dropped packet
-void STALogger::droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu> mpdu)
+void
+DroppedMpduCallback(Ptr<OutputStreamWrapper> out,
+                    WifiMacDropReason reason,
+                    Ptr<const WifiMpdu> mpdu)
 {
     Ptr<Packet> p = mpdu->GetPacket()->Copy();
     LlcSnapHeader llcSnapHeader;
@@ -138,20 +109,20 @@ void STALogger::droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu
     if (p->GetSize() > 0 && p->RemoveHeader(llcSnapHeader) && p->RemoveHeader(ipv4Header) && p->RemoveHeader(udpHeader) && p->RemoveHeader(seqTsHeader))
     {
         PacketInfo info {seqTsHeader.GetSeq()};
-        const auto it = _packets.find(seqTsHeader.GetSeq());
-        if (it != _packets.end())
+        const auto it = packets.find(seqTsHeader.GetSeq());
+        if (it != packets.end())
         {
             info = it->second;
         }
         info.acked = false;
         info.latency = Simulator::Now() - seqTsHeader.GetTs();
-        _output_file << ", " << std::endl << json(info);
-        _packets.erase(it, _packets.end());
+        *out->GetStream() << ", " << std::endl << json(info);
+        packets.erase(it, packets.end());
     }
 }
 
-
-int main(int argc, char** argv) {
+int
+main(int argc, char** argv) {
     constexpr uint32_t port = 9;
     std::string outFilePath = "db0.json";
     std::string jsonConfig = "conf.json";    
@@ -188,16 +159,14 @@ int main(int argc, char** argv) {
         arg_file >> args;        
     } 
     
-    // Create STALogger
-    STALogger sta_logger(outFilePath, args);
 
-    // Set seed
+    AsciiTraceHelper asciiHelper;
+    Ptr<OutputStreamWrapper> outputFile = asciiHelper.CreateFileStream(outFilePath, std::ios::out | std::ios::trunc);
     RngSeedManager::SetSeed(1);
     SeedManager::SetSeed(1);
     //Packet::EnablePrinting();
 
-    // Output file header
-    sta_logger.logHeader();
+    *outputFile->GetStream() << "[" << std::endl << json(args);
 
     // Create node containers for AP, STA and interferers
     NodeContainer wifiApNodes;
@@ -392,17 +361,17 @@ int main(int argc, char** argv) {
     // Tracing for acked packets
     std::stringstream ss;
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/AckedMpdu";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::ackedMpduCallback, &sta_logger));
+    Config::ConnectWithoutContext(ss.str(), MakeBoundCallback(&AckedMpduCallback, outputFile));
 
     // Tracing for response timeout
     ss.str(std::string());
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/MpduResponseTimeout";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::mpduTimeoutCallback, &sta_logger));
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&MpduTimeoutCallback));
 
     // Tracing for dropped packets
     ss.str(std::string());
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/DroppedMpdu";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::droppedMpduCallback, &sta_logger));
+    Config::ConnectWithoutContext(ss.str(), MakeBoundCallback(&DroppedMpduCallback, outputFile));
 
     // DOES NOT WORK IN DEBUG (ONLY IN RELEASE)
     PopulateArpCache();
@@ -416,7 +385,9 @@ int main(int argc, char** argv) {
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
 
-    sta_logger.logFooter(duration);
+    *outputFile->GetStream() << "," << std::endl << json({
+        {"elapsed_seconds",  duration.count()}
+    }) << std::endl << "]";
 
     Simulator::Destroy();
     return 0;
