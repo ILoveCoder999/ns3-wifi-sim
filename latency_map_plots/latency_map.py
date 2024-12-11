@@ -6,12 +6,19 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Inputs
-EXP_DIR = "./2d-test"            # folder with experiement results
-EXP_FILE = "./experiments.json"  # maps experiment file -> configuration
-CONF_FILE = "./configs.json"     # single experiments grouped by APs and interferents setup
-MAP_DIR = "./maps"
-PLOT_DIR = "./plots"
+
+EXP_DIR = Path("./2d-test-18-fix").absolute()  # folder with experiement results
+OUT_DIR = EXP_DIR.parent.absolute() / (EXP_DIR.name + "_maps")    # output folder
+
+EXP_FILE_SUFFIX = ".json"
+#EXTRACT_EXP_NUM = lambda x: int(x.name.split(".")[0].replace("db", ""))
+EXTRACT_EXP_NUM = lambda x: int(x.name.split(".")[0].split("_")[1])
+
+
+EXP_FILE =  OUT_DIR / "experiments.json"                    # maps experiment file -> configuration
+CONF_FILE = OUT_DIR / "configs.json"                        # single experiments grouped by APs and interferents setup
+MAP_DIR = OUT_DIR / "maps"
+PLOT_DIR = OUT_DIR / "plots"
 
 # metrics for maps
 METRICS = {
@@ -37,11 +44,12 @@ METRICS = {
     }
 }
 
-
 def extract_headers(exp_dir, fname):
-    exp_folder = Path(exp_dir)
-    paths = sorted([p for p in exp_folder.iterdir() if p.is_file() and p.suffix == ".dat"])
-    paths = sorted(paths, key=lambda x: int(x.name.split(".")[0].replace("db", "")))
+    exp_dir = Path(exp_dir)
+    fname = Path(fname)
+
+    paths = sorted([p for p in exp_dir.iterdir() if p.is_file() and p.suffix == EXP_FILE_SUFFIX])
+    paths = sorted(paths, key=EXTRACT_EXP_NUM)
 
     conf_dict = {}
     errors = []
@@ -60,6 +68,7 @@ def extract_headers(exp_dir, fname):
     print([p.name for p in errors])
     print([k for k, v in conf_dict.items() if v is None])
 
+    fname.parent.absolute().mkdir(parents=True, exist_ok=True)
     with open(fname, "w") as f:
         json.dump(conf_dict, f, indent=4)
 
@@ -126,6 +135,7 @@ def export_latency_maps(conf_file, exp_dir, map_dir):
             m.fill(np.nan)
 
         for file, pos in files.items():
+            print(file)
             path = exp_dir / file
 
             with open(path) as f:
@@ -171,9 +181,13 @@ def plot_lantency_maps(conf_file, map_dir, plot_dir):
             conf_num = int(map_path.name.split(".")[0].split("_")[1])
             print(conf_num)
 
-            step = 1 if conf_num < 9 else 2.5
-            x_min = 0 if conf_num < 9 else -50
-            y_min = 0 if conf_num < 9 else -50
+            # step = 1 if conf_num < 9 else 2.5
+            # x_min = 0 if conf_num < 9 else -50
+            # y_min = 0 if conf_num < 9 else -50
+
+            step = 2.5
+            x_min = -50
+            y_min = -50
 
             # data transformation (TO MOVE)
             mask = (my_data[:, :] < 0)# set -1 to nan
@@ -231,7 +245,7 @@ def plot_lantency_maps(conf_file, map_dir, plot_dir):
 
 #%%
 def main():
-    # extract_headers(exp_dir, "experiments.json") # extract experiment configuration for each file
+    # extract_headers(EXP_DIR, EXP_FILE) # extract experiment configuration for each file
 
     # group_configurations(EXP_FILE, CONF_FILE)  # group single experiments by APs and interferents setup
 

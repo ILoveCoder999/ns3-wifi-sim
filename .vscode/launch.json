@@ -8,8 +8,8 @@
             "name": "(gdb) Launch from scratch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}-${input:buildType}", //debug
-            //"program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}", //release    
+            //"program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}-${input:buildType}", //debug
+            "program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}", //release    
             
             "args": [
                 "--jsonConfig=latency-test-v2/test_beacons_ap/test_single.json",
