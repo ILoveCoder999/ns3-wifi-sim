@@ -35,6 +35,6 @@
   ],
   "interfererNodes": [],
   "simulationTime": 30000,
-  "enablePcap": true,
+  "enablePcap": false,
   "pcapPrefix": ""
 }
