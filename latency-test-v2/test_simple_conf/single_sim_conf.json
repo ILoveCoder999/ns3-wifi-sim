@@ -1,8 +1,8 @@
 {
   "staNode": {
     "position": {
-      "x": 1,
-      "y": 1,
+      "x": -30,
+      "y": 30,
       "z": 0.0
     },
     "payloadSize": 22,
@@ -34,7 +34,7 @@
     }
   ],
   "interfererNodes": [],
-  "simulationTime": 30000,
+  "simulationTime": 3000,
   "enablePcap": false,
   "pcapPrefix": ""
 }

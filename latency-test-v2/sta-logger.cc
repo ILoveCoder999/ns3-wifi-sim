@@ -5,7 +5,9 @@
 #include "ns3/seq-ts-header.h"
 #include "ns3/spectrum-wifi-helper.h"
 #include "ns3/udp-header.h"
+#include "ns3/wifi-psdu.h"
 
+NS_LOG_COMPONENT_DEFINE("StaLogger");
 
 STALogger::STALogger(std::string out_file_path, Arguments args): _args(args)
 {
@@ -25,6 +27,44 @@ void STALogger::logFooter(std::chrono::seconds duration)
     }) << std::endl << "]";
 }
 
+void STALogger::sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVector, double txPowerW)
+{   
+    NS_LOG_DEBUG("Psdu map size:" << psduMap.size());
+    NS_LOG_DEBUG("Tracked packet number:" << _packets.size());
+
+    for (auto& it: psduMap)
+    {
+        const WifiPsdu& psdu =  *it.second;
+
+        NS_LOG_DEBUG("Mdpu in psdu: " << psdu.GetNMpdus());
+        
+        for (auto it: psdu)
+        {
+            const WifiMpdu& mpdu = *it;
+            Ptr<Packet> p = mpdu.GetPacket()->Copy(); 
+            LlcSnapHeader llcSnapHeader;
+            Ipv4Header ipv4Header;
+            UdpHeader udpHeader;
+            SeqTsHeader seqTsHeader;    
+            if (p->GetSize() > 0 && p->RemoveHeader(llcSnapHeader) && p->RemoveHeader(ipv4Header) && p->RemoveHeader(udpHeader) && p->RemoveHeader(seqTsHeader))
+            {
+                const auto it = _packets.find(seqTsHeader.GetSeq());
+                PacketInfo info {seqTsHeader.GetSeq()};
+                if (it != _packets.end())
+                {
+                    info = it->second;
+                    if (info.rate != 0)
+                    {
+                        NS_FATAL_ERROR("Retransmission of packet before timeout");
+                    }
+                }
+                info.rate = txVector.GetMode().GetDataRate(txVector);
+                _packets.insert_or_assign(seqTsHeader.GetSeq(), info);
+            }
+        }
+    }
+}
+
 void STALogger::ackedMpduCallback(Ptr<const WifiMpdu> mpdu)
 {
     Ptr<Packet> p = mpdu->GetPacket()->Copy();
@@ -39,6 +79,10 @@ void STALogger::ackedMpduCallback(Ptr<const WifiMpdu> mpdu)
         if (it != _packets.end())
         {
             info = it->second;
+        }
+        else
+        {
+            NS_FATAL_ERROR("Acked packet was not sent");
         }
         info.acked = true;
         info.latency = Simulator::Now() - seqTsHeader.GetTs();
@@ -63,11 +107,23 @@ void STALogger::mpduTimeoutCallback(uint8_t reason, Ptr<const WifiMpdu> mpdu, co
         {
             info = it->second;
         }
-        info.retransmissions.push_back(RetransmissionInfo {
-            tx_vector.GetMode().GetDataRate(tx_vector),
+        else
+        {
+            NS_FATAL_ERROR("Timeout packet was not sent");
+        }
+        uint64_t rate = tx_vector.GetMode().GetDataRate(tx_vector);
+        if (rate!= info.rate)
+        {
+            NS_FATAL_ERROR("Rate mismatch on sent packet");
+        }
+        info.retransmissions.push_back(RetransmissionInfo
+        {
+            rate,
             Simulator::Now() - seqTsHeader.GetTs()
         });
+        info.rate = 0;
         _packets.insert_or_assign(seqTsHeader.GetSeq(), info);
+        
     }
 }
 
@@ -86,6 +142,10 @@ void STALogger::droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu
         if (it != _packets.end())
         {
             info = it->second;
+        }
+        else
+        {
+            NS_FATAL_ERROR("Dropped packet was not sent");
         }
         info.acked = false;
         info.latency = Simulator::Now() - seqTsHeader.GetTs();

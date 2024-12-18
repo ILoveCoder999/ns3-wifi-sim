@@ -27,6 +27,7 @@ struct PacketInfo
 {
     uint32_t seq;
     bool acked;
+    uint64_t rate;
     ns3::Time latency;
     std::vector<RetransmissionInfo> retransmissions;
 };
@@ -36,6 +37,7 @@ inline void to_json(json& j, const PacketInfo& p)
     j = json {
             {"seq", p.seq},
             {"acked", p.acked},
+            {"rate", p.rate},
             {"latency", p.latency.ToInteger(ns3::Time::Unit::NS)},
             {"retransmissions", p.retransmissions}
     };
