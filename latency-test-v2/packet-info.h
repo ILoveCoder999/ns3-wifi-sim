@@ -9,17 +9,21 @@
 
 using json = nlohmann::json;
 
-struct RetransmissionInfo
+struct TransmissionInfo
 {
     uint64_t rate;
     ns3::Time latency;
+    ns3::Time tx_time;
+    double tx_power_w;
 };
 
-inline void to_json(json& j, const RetransmissionInfo& r)
+inline void to_json(json& j, const TransmissionInfo& r)
 {
     j = json {
             {"rate", r.rate},
-            {"latency", r.latency.ToInteger(ns3::Time::Unit::NS)}
+            {"latency", r.latency.ToInteger(ns3::Time::Unit::NS)},
+            {"tx_time", r.tx_time.ToInteger(ns3::Time::Unit::NS)},
+            {"tx_power_w", r.tx_power_w}
     };
 }
 
@@ -27,9 +31,9 @@ struct PacketInfo
 {
     uint32_t seq;
     bool acked;
-    uint64_t rate;
     ns3::Time latency;
-    std::vector<RetransmissionInfo> retransmissions;
+    std::vector<TransmissionInfo> transmissions;
+    std::shared_ptr<TransmissionInfo> current_tx;
 };
 
 inline void to_json(json& j, const PacketInfo& p)
@@ -37,9 +41,8 @@ inline void to_json(json& j, const PacketInfo& p)
     j = json {
             {"seq", p.seq},
             {"acked", p.acked},
-            {"rate", p.rate},
             {"latency", p.latency.ToInteger(ns3::Time::Unit::NS)},
-            {"retransmissions", p.retransmissions}
+            {"transmissions", p.transmissions}
     };
 }
 

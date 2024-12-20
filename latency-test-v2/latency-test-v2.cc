@@ -2,6 +2,7 @@
 #include "packet-info.h"
 #include "utils.h"
 #include "sta-logger.h"
+#include "sta-logger-power.h"
 
 #include <iostream>
 #include <fstream>
@@ -32,6 +33,7 @@
 #include "ns3/udp-header.h"
 #include "ns3/wifi-mac.h"
 #include "ns3/wifi-mpdu.h"
+#include "ns3/wifi-net-device.h"
 #include "my-udp-client-helper.h"
 
 #include <chrono>
@@ -43,7 +45,13 @@ using json = nlohmann::json;
 using namespace ns3;
 
 
+const bool ENABLE_POWER_LOG = false;
+
+
 int main(int argc, char** argv) {
+
+    LogComponentEnable("StaLogger", LOG_LEVEL_DEBUG);
+
     constexpr uint32_t port = 9;
     std::string outFilePath = "db0.json";
     std::string jsonConfig = "conf.json";    
@@ -77,19 +85,15 @@ int main(int argc, char** argv) {
         {
             return 2;
         }
-        arg_file >> args;        
-    } 
-    
-    // Create STALogger
-    STALogger sta_logger(outFilePath, args);
+        arg_file >> args;
+    }
+
+    //args.staNode.remoteStationManager = "ns3::ParfWifiManager";
 
     // Set seed
     RngSeedManager::SetSeed(1);
     SeedManager::SetSeed(1);
     //Packet::EnablePrinting();
-
-    // Output file header
-    sta_logger.logHeader();
 
     // Create node containers for AP, STA and interferers
     NodeContainer wifiApNodes;
@@ -176,7 +180,7 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, long unsigned int> apNodesLookup;
 
     // Configure WiFi for APs
-    for (long unsigned int i = 0;i < args.apNodes.size();i++)
+    for (long unsigned int i = 0; i < args.apNodes.size(); i++)
     {
         const auto& apConfig = args.apNodes[i];
         const auto wifiApNode = wifiApNodes.Get(i);
@@ -281,8 +285,28 @@ int main(int argc, char** argv) {
     interfererApps.Start(Seconds(1.0));
     interfererApps.Stop(Seconds(args.simulationTime + 1));
 
-    // Tracing for acked packets
+
+    // create STA logger
+    STALogger sta_logger(outFilePath, args, DynamicCast<WifiNetDevice>(staDevice.Get(0)));
+
+    // if (ENABLE_POWER_LOG)
+    // {
+    //     UintegerValue packet_size_obj;
+    //     clientApp.Get(0)->GetAttribute("PacketSize", packet_size_obj);
+    //     sta_logger = new STALoggerPower(outFilePath, args, DynamicCast<WifiNetDevice>(staDevice.Get(0)), packet_size_obj.Get());
+    // }
+    // else {
+    //     sta_logger = new STALogger(outFilePath, args);
+    // }
+    sta_logger.logHeader();
+
+    // Tracing for sent packets
     std::stringstream ss;
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxPsduBegin";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::sendingMpduCallback,  &sta_logger));
+
+    // Tracing for acked packets
+    ss.str(std::string());
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/AckedMpdu";
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::ackedMpduCallback, &sta_logger));
 
@@ -295,6 +319,40 @@ int main(int argc, char** argv) {
     ss.str(std::string());
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/DroppedMpdu";
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::droppedMpduCallback, &sta_logger));
+
+    // // Power tracing
+    // if (ENABLE_POWER_LOG)
+    // {
+    //     std::string sta_manager = args.staNode.remoteStationManager;  
+        
+    //     if(sta_manager == "ns3::MinstrelHtWifiManager" || sta_manager == "ns3::MinstrelWifiManager")
+    //     {
+    //         //NS_FATAL_ERROR("STA power log not supported for selected WifiManager");
+    //         ss.str(std::string());
+    //         ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/RemoteStationManager/$" + sta_manager + "/Rate";
+    //         Config::Connect(ss.str(), MakeCallback(&STALoggerPower::rateChangeCallback, dynamic_cast<STALoggerPower*>(sta_logger)));
+
+    //         ss.str(std::string());
+    //         ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBegin";
+    //         Config::Connect(ss.str(), MakeCallback(&STALoggerPower::phyTxCallback, dynamic_cast<STALoggerPower*>(sta_logger)));
+    //     }
+    //     // Callbacks are different depending on WiFi Manager
+    //     else {
+    //         NS_FATAL_ERROR("STA power log not supported for selected WifiManager");
+
+    //         ss.str(std::string());
+    //         ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/RemoteStationManager/$" + sta_manager + "/RateChange";
+    //         Config::Connect(ss.str(), MakeCallback(&STALoggerPower::rateChangeCallbackDest, dynamic_cast<STALoggerPower*>(sta_logger)));
+
+    //         ss.str(std::string());
+    //         ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/RemoteStationManager/$" + sta_manager + "/PowerChange";
+    //         Config::Connect(ss.str(), MakeCallback(&STALoggerPower::powerChangeCallback, dynamic_cast<STALoggerPower*>(sta_logger)));
+
+    //         ss.str(std::string());
+    //         ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBegin";
+    //         Config::Connect(ss.str(), MakeCallback(&STALoggerPower::phyTxCallback, dynamic_cast<STALoggerPower*>(sta_logger)));
+    //     }      
+    // }
 
     // DOES NOT WORK IN DEBUG (ONLY IN RELEASE)
     PopulateArpCache();
@@ -309,6 +367,9 @@ int main(int argc, char** argv) {
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
 
     sta_logger.logFooter(duration);
+    
+    // // delete sta logger
+    // delete sta_logger;
 
     Simulator::Destroy();
     return 0;

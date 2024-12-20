@@ -14,13 +14,15 @@ class STALoggerPower: public STALogger
 
         void powerChangeCallback(std::string path, double old_power, double new_power, Mac48Address dest); // power is in dBm (10log_10(P/1mW)))
         void phyTxCallback(std::string path, Ptr<const Packet> packet, double power_w);                    // power is in Watt
-        void rateChangeCallback(std::string path, DataRate old_rate, DataRate new_rate, Mac48Address dest);
+        
+        void rateChangeCallback(std::string path, uint64_t old_rate, uint64_t new_rate);   
+        void rateChangeCallbackDest(std::string path, DataRate old_rate, DataRate new_rate, Mac48Address dest);
 
     private:
         typedef std::vector<std::pair<Time, DataRate>> TxTime;
 
-        double _current_power;
-        DataRate _current_rate;
+        double _current_power;          //milliWatt
+        DataRate _current_rate;         
         double _total_energy;
         double _total_time;
 

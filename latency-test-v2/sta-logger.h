@@ -19,7 +19,7 @@ using namespace ns3;
 class STALogger
 {
     public:
-        STALogger(std::string out_file_path, Arguments args);
+        STALogger(std::string out_file_path, Arguments args, Ptr<WifiNetDevice> net_dev);
         virtual ~STALogger() {};
 
         void logHeader();
@@ -35,11 +35,10 @@ class STALogger
         void ackedMpduCallback(Ptr<const WifiMpdu> mpdu);
         void mpduTimeoutCallback(uint8_t reason, Ptr<const WifiMpdu> mpdu, const WifiTxVector& tx_vector);  
         void droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu> mpdu);
-
-
     
     protected:
         std::ofstream _output_file;
+        Ptr<WifiNetDevice> _net_dev;
 
     private:
         Arguments _args;
