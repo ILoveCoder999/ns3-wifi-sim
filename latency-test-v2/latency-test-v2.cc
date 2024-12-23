@@ -44,12 +44,12 @@ using json = nlohmann::json;
 using namespace ns3;
 
 
-const bool ENABLE_POWER_LOG = false;
-
+NS_LOG_COMPONENT_DEFINE("LatencyTestV2");
 
 int main(int argc, char** argv) {
 
-    LogComponentEnable("StaLogger", LOG_LEVEL_DEBUG);
+    LogComponentEnable("LatencyTestV2", LOG_LEVEL_DEBUG);
+    LogComponentEnable("StaLogger", LOG_LEVEL_DEBUG);    
 
     constexpr uint32_t port = 9;
     std::string outFilePath = "db0.json";
@@ -86,8 +86,6 @@ int main(int argc, char** argv) {
         }
         arg_file >> args;
     }
-
-    //args.staNode.remoteStationManager = "ns3::ParfWifiManager";
 
     // Set seed
     RngSeedManager::SetSeed(1);
@@ -309,7 +307,7 @@ int main(int argc, char** argv) {
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/DroppedMpdu";
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::droppedMpduCallback, &sta_logger));
 
-    // DOES NOT WORK IN DEBUG (ONLY IN RELEASE)
+    // Populate Arp Cache
     PopulateArpCache();
 
     // Start simulation

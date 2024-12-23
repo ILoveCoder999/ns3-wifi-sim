@@ -28,13 +28,16 @@ class STALogger
         /* CALLBACKS
         - Trace sources in WifiMac, called from src/wifi/model/frame-exchange-manager.cc (see SendMpdu() function)
         - Only mdpuTimeoutCallback can access txVector (it is the one that was used to send the packet)
-        - TODO: read data rate from sent packet (physical layer callback, the mpdu must be searched in the psdu)
-            https://www.nsnam.org/docs/release/3.43/doxygen/dc/d2d/classns3_1_1_wifi_phy.html#a570e0119c2b01f5be064d7d49c598a4a
         */
-        void sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVector, double txPowerW); //PhyTxPsduBegin
         void ackedMpduCallback(Ptr<const WifiMpdu> mpdu);
         void mpduTimeoutCallback(uint8_t reason, Ptr<const WifiMpdu> mpdu, const WifiTxVector& tx_vector);  
         void droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu> mpdu);
+        /*
+        Callback for obtaining data rate, transmission time and tx power
+        - to have tx power changes multiple power levels should be configured via WifiPhy
+        - this also requires a rate control algorithms that tunes tx power (e.g. ns3::ParfWifiManager)
+        */
+       void sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVector, double txPowerW); //PhyTxPsduBegin
     
     protected:
         std::ofstream _output_file;
