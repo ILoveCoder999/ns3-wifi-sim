@@ -42,7 +42,7 @@ def main(args: Args):
 #BSUB -eo {stderr}
 #BSUB -oo {stdout}
 
-{executable} '{config}' {out_file}.tmp
+{executable} --jsonConfig='{config}' --outFilePath={out_file}.tmp --inlineConfig
 mv {out_file}.tmp {out_file}
 """
         subprocess.run([
