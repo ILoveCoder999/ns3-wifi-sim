@@ -1,18 +1,20 @@
 #%%
 import json
+import itertools
 from enum import Enum
 from pathlib import Path
 import copy
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
-EXP_DIR = Path("./2d-test-18-fix").absolute()  # folder with experiement results
+EXP_DIR = Path("./wfcs_sim").absolute()  # folder with experiement results
 OUT_DIR = EXP_DIR.parent.absolute() / (EXP_DIR.name + "_maps")    # output folder
 
-EXP_FILE_SUFFIX = ".json"
-#EXTRACT_EXP_NUM = lambda x: int(x.name.split(".")[0].replace("db", ""))
-EXTRACT_EXP_NUM = lambda x: int(x.name.split(".")[0].split("_")[1])
+EXP_FILE_SUFFIX = ".dat"
+EXTRACT_EXP_NUM = lambda x: int(x.name.split(".")[0].replace("db", ""))
+#EXTRACT_EXP_NUM = lambda x: int(x.name.split(".")[0].split("_")[1])
 
 
 EXP_FILE =  OUT_DIR / "experiments.json"                    # maps experiment file -> configuration
@@ -20,9 +22,24 @@ CONF_FILE = OUT_DIR / "configs.json"                        # single experiments
 MAP_DIR = OUT_DIR / "maps"
 PLOT_DIR = OUT_DIR / "plots"
 
+
+def extract_avg_power(data):
+    avg_power = sum(map(
+        lambda row: sum(map(
+                    lambda t: t["tx_power_w"] * t["tx_time"],
+                    row["transmissions"]
+                )),
+        data))
+    return avg_power / 10**6 / 30000
+
 # metrics for maps
 METRICS = {
     "latency_avg" : {
+        "label": "latency ($\mu$s)",
+        "scaling": 0.001,
+        "fnc": lambda data: sum(map(lambda x: x["latency"], data))/len(data)
+    },
+    "latency_min" : {
         "label": "latency ($\mu$s)",
         "scaling": 0.001,
         "fnc": lambda data: sum(map(lambda x: x["latency"], data))/len(data)
@@ -39,10 +56,23 @@ METRICS = {
     },
     "retransmission_count" : {
         "label": "# retransmissions",
-        "scaling": 0.001,
-        "fnc": lambda data: sum(map(lambda x: len(x["retransmissions"]), data))
+        "scaling": 1,
+        "fnc": lambda data: sum(map(lambda x: len(x["transmissions"]) - 1, data))
+    },
+    "avg_power": {
+        "label": "avg (mW)",
+        "scaling": 1,
+        "fnc": extract_avg_power
     }
 }
+
+
+
+# min
+# 10th percentile
+# filter dropped packets
+
+# add power metrics
 
 def extract_headers(exp_dir, fname):
     exp_dir = Path(exp_dir)
@@ -104,6 +134,68 @@ def group_configurations(exp_file, conf_file):
 
     with open(conf_file, "w") as f:
         json.dump(configs, f, indent=4)
+
+
+def export_map_1d(conf_file, exp_dir, map_dir):
+    with open(conf_file) as f:
+        configs = json.load(f)
+
+    exp_dir = Path(exp_dir)
+    map_dir = Path(map_dir)
+
+    map_dir.mkdir(parents=True, exist_ok=True)
+    
+    for idx, conf in enumerate(configs):
+        df_metrics = pd.DataFrame(columns = ["x_pos"] + [m for m in METRICS])
+        files = conf["files"]
+
+        for file, pos in files.items():
+            print(file)
+            path = exp_dir / file
+
+            with open(path) as f:
+                exp_data = json.load(f)
+
+            exp_data = exp_data[1:-1]
+
+            new_row = {c: None for c in df_metrics.columns}
+            new_row["x_pos"] = int(pos["x"])
+
+            for m in METRICS:
+                new_row[m] = METRICS[m]["fnc"](exp_data) if len(exp_data) > 0 else None
+            df_metrics.loc[len(df_metrics)] = new_row
+
+        df_metrics.to_csv(map_dir / "map_{:02}.csv".format(idx), index=False)
+
+
+def plot_maps_1d(conf_file, map_dir, plot_dir):
+    with open(conf_file) as f:
+        configs = json.load(f)
+
+    map_dir = Path(map_dir)
+    plot_dir = Path(plot_dir)
+    
+    for metric in METRICS:
+        new_dir = plot_dir / metric
+        new_dir.mkdir(parents=True, exist_ok=True)
+
+    paths = sorted([p for p in (map_dir).iterdir()])
+
+    for map_path in paths:
+        df_metrics = pd.read_csv(map_path)
+        idx = int(map_path.name.split(".")[0].split("_")[1])
+        print(idx)
+
+        for metric in METRICS:
+            fig, ax = plt.subplots()
+            ax.plot(df_metrics["x_pos"], df_metrics[metric]*METRICS[metric]["scaling"])
+            ax.set_title(metric, fontsize=20)
+            ax.set_xlabel("STA position", fontsize=16)#, rotation=-90, va="bottom")
+            ax.set_ylabel(METRICS[metric]["label"], fontsize=16)#, rotation=-90, va="bottom")
+            ax.tick_params(axis='both', which='major', labelsize = 14)
+            plt.tight_layout()
+            fig.savefig(plot_dir / metric / "map_{:02}.png".format(idx))
+            plt.close(fig)    
 
 
 def export_latency_maps(conf_file, exp_dir, map_dir):
@@ -245,13 +337,18 @@ def plot_lantency_maps(conf_file, map_dir, plot_dir):
 
 #%%
 def main():
-    # extract_headers(EXP_DIR, EXP_FILE) # extract experiment configuration for each file
+    extract_headers(EXP_DIR, EXP_FILE) # extract experiment configuration for each file
 
-    # group_configurations(EXP_FILE, CONF_FILE)  # group single experiments by APs and interferents setup
+    group_configurations(EXP_FILE, CONF_FILE)  # group single experiments by APs and interferents setup
 
+    export_map_1d(CONF_FILE, EXP_DIR, MAP_DIR)
+
+    plot_maps_1d(CONF_FILE, MAP_DIR, PLOT_DIR)
+    
+    
     # export_latency_maps(CONF_FILE, EXP_DIR, MAP_DIR)
 
-    plot_lantency_maps(CONF_FILE, MAP_DIR, PLOT_DIR)
+    # plot_lantency_maps(CONF_FILE, MAP_DIR, PLOT_DIR)
 
     return 0
 

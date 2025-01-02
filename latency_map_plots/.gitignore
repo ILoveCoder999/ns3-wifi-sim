@@ -1,6 +1,7 @@
 __pycache__
 .venv
 2d-test
+wfcs_sim
 archives
 ns-3-dev-ben
 configs.json
