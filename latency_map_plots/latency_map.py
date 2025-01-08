@@ -80,10 +80,10 @@ METRICS = {
         "scaling": 0.001,
         "fnc": lambda data: np.percentile(np.array(list(map(lambda x: x["latency"], remove_dropped(data)))), 99.9)
     },
-    "retransmission_count" : {
-        "label": "# retransmissions",
+    "transmission_num_avg" : {
+        "label": "# transmissions",
         "scaling": 1,
-        "fnc": lambda data: sum(map(lambda x: len(x["transmissions"]) - 1, remove_dropped(data)))
+        "fnc": lambda data: statistics.mean(map(lambda x: len(x["transmissions"]), remove_dropped(data)))
     },
     "power_avg": {
         "label": "power (mW)",
