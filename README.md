@@ -115,7 +115,6 @@ For reading pcap file it is possible to use either tcpdump or Wireshard.
 ```bash
 tcpdump -nn -tt -r myfirst-0-0.pcap
 ```
-
 	
 PROBLEMI
 - se rimuovo build dal launch.json succede un casino (solo con cmaketools)
@@ -127,8 +126,48 @@ PROBLEMI
 ### Observations
 - a the beginning of file more latency
 
-## IMPORTANT
-- filter out non-acked packets
+## Cluster configuration
+Use conda environments to install compiler required for ns-3 (the version on the cluster is outdated).
+```bash
+conda create --name ENV_NAME	# create new environment
+conda env list 					# list environments
+conda activate ENV_NAME 		# (ENV_NAME or ENV_PATH)
+```
+
+Install required packages:
+```bash
+conda install anaconda::gxx_linux-ppc64le 	# (currently it is the 11.2.0 version, conda forge 14.2 is bugged)
+conda install python=3.11 					# later python versions currently do not work with numpy
+conda install numpy
+conda list									# list installed packages
+```
+
+It is also possibile to deactivate and/or remove an environment:
+```bash
+conda deactivate
+conda remove -n ENV_NAME --all # remove all packages, i.e. delete enviroment
+```
+
+Check that the compiler that is being used is the one inside the enviroment and that it is the ```powerpc64le``` version:
+```bash
+env | grep CC
+env | grep CXX
+```
+
+Configure and build ns3
+```bash
+./ns3 clear
+rm -r cmake-cache # be sure it is removed, otherwise it will use the previous compiler
+./ns3 configure --build-profile=optimized --enable-examples # configure ns-3
+./ns3 build
+```
+
+Finally lauch the simulations
+```bash
+cd latency-test-v2/scripts
+python -m submit_jobs BATCH_FILE BATCH_SIZE OUT_DIR # Use -1 for BATCH_SIZE to run all simulations
+```
+
 
 ## TODO
 - put step in configuration file
