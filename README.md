@@ -148,17 +148,23 @@ conda deactivate
 conda remove -n ENV_NAME --all # remove all packages, i.e. delete enviroment
 ```
 
+After you activate a new enviroment it is better do log-out of the server and log back in.
+This is to clear enviromental variables and only export the ones of the active environment.
+
 Check that the compiler that is being used is the one inside the enviroment and that it is the ```powerpc64le``` version:
 ```bash
 env | grep CC
 env | grep CXX
 ```
 
-Configure and build ns3
+Configure and build ns3.
+There will be warnings during the build due to the compiler version.
+It is not a problem unless there are errors and it terminates.
 ```bash
 ./ns3 clear
 rm -r cmake-cache # be sure it is removed, otherwise it will use the previous compiler
 ./ns3 configure --build-profile=optimized --enable-examples # configure ns-3
+./ns3 show profile # check configuration is correct
 ./ns3 build
 ```
 
