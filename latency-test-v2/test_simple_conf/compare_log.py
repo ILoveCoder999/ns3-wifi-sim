@@ -58,9 +58,36 @@ def compare_v2():
             else:
                 err_log.print_if_neq(l[key], l_ref[key], "Fields {}".format(key))            
 
+def compare_v3():
+    with open("db.json") as f:
+        db_ref = f.readlines()
+    
+    with open("db_new.json") as f:
+        db = f.readlines()
+
+    db_ref = db_ref[2:-2]
+    db = db[2:-2]
+
+    err_log = ErrorLogger()
+    for l_ref, l in zip(db_ref, db):
+        l_ref = json.loads(l_ref.strip()[:-1])
+        l = json.loads(l.strip()[:-1])
+
+        for t in l_ref["transmissions"]:
+            t.pop("tx_time")
+        for t in l["transmissions"]:
+            t.pop("tx_time")
+
+        for key in l_ref:
+            err_log.print_if_neq(l[key], l_ref[key], "Fields {}".format(key))            
+
+
+
+
 def main():
     # compare_v1()
-    compare_v2()
+    # compare_v2()
+    compare_v3()
 
 if __name__ == "__main__":
     main()

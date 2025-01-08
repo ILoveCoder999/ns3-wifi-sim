@@ -39,24 +39,21 @@ void STALogger::sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVec
         NS_LOG_DEBUG("Tracked packet number:" << _packets.size());
     }    
 
-    for (auto& it: psduMap)
+    for (auto& it_psdu: psduMap)
     {
-        const WifiPsdu& psdu =  *it.second;
-
-        if (psdu.GetNMpdus() > 1)
+        Ptr<const WifiPsdu> psdu =  it_psdu.second;
+        if (psdu->GetNMpdus() > 1)
         {
-            NS_LOG_DEBUG("Mdpu in psdu: " << psdu.GetNMpdus());
-        }
-        
-        for (auto it: psdu)
+            NS_LOG_DEBUG("Mdpu in psdu: " << psdu->GetNMpdus());
+        }        
+        for (auto it_mpdu: *psdu)
         {
-            const WifiMpdu& mpdu = *it;
+            const WifiMpdu& mpdu = *it_mpdu;
             Ptr<Packet> p = mpdu.GetPacket()->Copy(); 
             LlcSnapHeader llcSnapHeader;
             Ipv4Header ipv4Header;
             UdpHeader udpHeader;
             SeqTsHeader seqTsHeader;
-            uint32_t p_size = p->GetSize();    
             if (p->GetSize() > 0 && p->RemoveHeader(llcSnapHeader) && p->RemoveHeader(ipv4Header) && p->RemoveHeader(udpHeader) && p->RemoveHeader(seqTsHeader))
             {
                 const auto it = _packets.find(seqTsHeader.GetSeq());
@@ -78,7 +75,7 @@ void STALogger::sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVec
                 info.current_tx = std::make_shared<TransmissionInfo>();
                 info.current_tx->rate = txVector.GetMode().GetDataRate(txVector);
                 info.current_tx->tx_power_w = txPowerW;
-                info.current_tx->tx_time = WifiPhy::CalculateTxDuration(p_size, txVector, _net_dev->GetPhy()->GetPhyBand());
+                info.current_tx->tx_time = WifiPhy::CalculateTxDuration(psdu, txVector, _net_dev->GetPhy()->GetPhyBand());
                 _packets.insert_or_assign(seqTsHeader.GetSeq(), info);
             }
         }

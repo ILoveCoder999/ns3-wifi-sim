@@ -16,6 +16,14 @@ def float_range(start: float, stop: float, step: float, inclusive=False):
 
 
 simulations_1d = [
+    # Config without interferents
+    ([
+        ApConfig(
+            position=Position(x=0, y=0),
+            ssid="ssid_1",
+            phyId=0
+        )
+     ], []), 
     # Traslating interferent positions
     ([
         ApConfig(
