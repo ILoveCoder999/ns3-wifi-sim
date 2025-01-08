@@ -7,6 +7,7 @@ import copy
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import statistics
 
 
 EXP_DIR = Path("./wfcs_sim").absolute()  # folder with experiement results
@@ -32,41 +33,74 @@ def extract_avg_power(data):
         data))
     return avg_power / 10**6 / 30000
 
+def extract_rate(data):
+    avg_rate = statistics.mean(
+        itertools.chain.from_iterable(
+            map(
+                lambda row: [t["rate"] for t in row["transmissions"]],
+                data
+            )
+        )
+    )
+    return avg_rate
+
+def remove_dropped(data):
+    return [row for row in data if row["acked"] == True]
+
+
 # metrics for maps
 METRICS = {
     "latency_avg" : {
         "label": "latency ($\mu$s)",
         "scaling": 0.001,
-        "fnc": lambda data: sum(map(lambda x: x["latency"], data))/len(data)
+        "fnc": lambda data: statistics.mean(map(lambda x: x["latency"], remove_dropped(data)))
+    },
+    "latency_stdev" : {
+        "label": "latency ($\mu$s)",
+        "scaling": 0.001,
+        "fnc": lambda data: statistics.stdev(map(lambda x: x["latency"], remove_dropped(data)))
     },
     "latency_min" : {
         "label": "latency ($\mu$s)",
         "scaling": 0.001,
-        "fnc": lambda data: sum(map(lambda x: x["latency"], data))/len(data)
+        "fnc": lambda data: min(map(lambda x: x["latency"], remove_dropped(data)))
+    },
+    "latency_10_perc" : {
+        "label": "latency ($\mu$s)",
+        "scaling": 0.001,
+        "fnc": lambda data: np.percentile(np.array(list(map(lambda x: x["latency"], remove_dropped(data)))), 10)
     },
     "latency_99_perc" : {
         "label": "latency ($\mu$s)",
         "scaling": 0.001,
-        "fnc": lambda data: np.percentile(np.array(list(map(lambda x: x["latency"], data))), 99)
+        "fnc": lambda data: np.percentile(np.array(list(map(lambda x: x["latency"], remove_dropped(data)))), 99)
     },
     "latency_99.9_perc" : {
         "label": "latency ($\mu$s)",
         "scaling": 0.001,
-        "fnc": lambda data: np.percentile(np.array(list(map(lambda x: x["latency"], data))), 99.9)
+        "fnc": lambda data: np.percentile(np.array(list(map(lambda x: x["latency"], remove_dropped(data)))), 99.9)
     },
     "retransmission_count" : {
         "label": "# retransmissions",
         "scaling": 1,
-        "fnc": lambda data: sum(map(lambda x: len(x["transmissions"]) - 1, data))
+        "fnc": lambda data: sum(map(lambda x: len(x["transmissions"]) - 1, remove_dropped(data)))
     },
-    "avg_power": {
-        "label": "avg (mW)",
+    "power_avg": {
+        "label": "power (mW)",
         "scaling": 1,
         "fnc": extract_avg_power
+    },
+    "rate_avg": {
+        "label": "data rate (bit/s)",
+        "scaling": 1,
+        "fnc": extract_rate
+    },
+    "%_dropped": {
+        "label": "% dropped",
+        "scaling": 1,
+        "fnc": lambda data: len([row for row in data if row["acked"] == False]) / len(data) * 100
     }
 }
-
-
 
 # min
 # 10th percentile
