@@ -2,11 +2,12 @@ __pycache__
 .venv
 2d-test
 wfcs_sim
+wfcs_sim_old
 archives
 ns-3-dev-ben
 configs.json
 experiments.json
-maps*
-plots*
+wfcs_sim_maps
 2d-test_maps
 2d-test-18-fix
+2d-test-18-fix_maps
