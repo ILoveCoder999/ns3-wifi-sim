@@ -1,7 +1,7 @@
 {
     "staNode": {
       "position": {
-        "x": 52,
+        "x": 5,
         "y": 0,
         "z": 0.0
       },
@@ -34,7 +34,7 @@
       }
     ],
     "interfererNodes": [],
-    "simulationTime": 30000,
+    "simulationTime": 5000,
     "enablePcap": true,
     "pcapPrefix": ""
 }

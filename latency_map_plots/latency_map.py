@@ -289,11 +289,11 @@ def plot_lantency_maps(conf_file, map_dir, plot_dir):
 
 #%%
 def main():
-    # extract_headers(EXP_DIR, EXP_FILE) # extract experiment configuration for each file
+    extract_headers(EXP_DIR, EXP_FILE) # extract experiment configuration for each file
 
-    # group_configurations(EXP_FILE, CONF_FILE)  # group single experiments by APs and interferents setup
+    group_configurations(EXP_FILE, CONF_FILE)  # group single experiments by APs and interferents setup
 
-    # export_map_1d(CONF_FILE, EXP_DIR, MAP_DIR)
+    export_map_1d(CONF_FILE, EXP_DIR, MAP_DIR)
 
     plot_maps_1d(MAP_DIR, PLOT_DIR)
     

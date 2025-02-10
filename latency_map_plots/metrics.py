@@ -76,31 +76,22 @@ def extract_rate_succ_dist(data):
     rates_succ = [rates_succ.count(rate*1e6) for rate in DATA_RATES]
     return [rs / r * 100 for rs, r in zip(rates_succ, rates)]
 
-def extract_rate_latency_dist(data):
+def extract_rate_latency_dist(data, exclude_final = True):
     latency_data = list(
             map(
-                lambda row: [{"rate": t["rate"], "latency":t["latency"]} for t in (row["transmissions"][:-1] if row["acked"] else row["transmissions"])],
+                lambda row: [{"rate": t["rate"], "latency":t["latency"]} for t in (row["transmissions"][:-1] if (row["acked"] and exclude_final) else row["transmissions"])],
                 data
         )
     )
-
-    # for row in latency_data[-10:]:
-    #     print([el["latency"] for el in row])
-
     for row in latency_data:
         row.reverse()
         for j in range(0, len(row)-1):
             row[j]["latency"] -= row[j+1]["latency"]
-
-    # for row in latency_data[-10:]:
-    #     print([el["latency"] for el in row])
-
     latency_data = list(itertools.chain.from_iterable(latency_data))
-
     rate_latency = [sum([el["latency"] for el in latency_data if el["rate"]==(rate*1e6)]) for rate in DATA_RATES]
     rate_latency = [l/len(data) for l in rate_latency]
-
     return rate_latency
+
 
 def remove_dropped(data):
     return [row for row in data if row["acked"] == True]
@@ -189,6 +180,12 @@ METRICS = {
         "fnc": extract_rate_dist,
         "classes" : DATA_RATES
     },
+    "rate_distribution_no_dropped": {
+        "label": "# Transmissions (x1000)",
+        "scaling": 0.001,
+        "fnc": lambda data: extract_rate_dist(remove_dropped(data)),
+        "classes" : DATA_RATES
+    },
     "rate_succ_distribution": {
         "label": "Success percentage (%)",
         "scaling": 1,
@@ -198,7 +195,13 @@ METRICS = {
     "rate_latency_distribution": {
         "label": "Latency ($\mu$s)",
         "scaling": 0.001,
-        "fnc": extract_rate_latency_dist,
+        "fnc": lambda data: extract_rate_latency_dist(remove_dropped(data)),
+        "classes" : DATA_RATES
+    },
+    "rate_latency_distribution_with_final": {
+        "label": "Latency ($\mu$s)",
+        "scaling": 0.001,
+        "fnc": lambda data: extract_rate_latency_dist(remove_dropped(data), exclude_final=False),
         "classes" : DATA_RATES
     }
 }

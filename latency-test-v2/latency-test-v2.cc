@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
         spectrumChannel->SetPropagationDelayModel(propagationDelayModel);
         spectrumPhyHelper.SetChannel(spectrumChannel);
         spectrumPhyHelper.Set("ChannelSettings", StringValue(phyConfig.channelSettings));
-        spectrumChannel->AssignStreams(100);
+        spectrumChannel->AssignStreams(100); //allow the deterministic configuration of random variable stream numbers
 
         spectrumPhys.push_back(spectrumPhyHelper);
     }
