@@ -7,6 +7,7 @@ import seaborn as sns
 import ast
 import numpy as np
 
+OUT_FORMAT = "pdf" # "png"
 
 plt.style.use('seaborn-v0_8-paper')
 sns.set_theme(style="whitegrid")
@@ -33,7 +34,7 @@ p2, = ax.plot(df_0["x_pos"], df_0["latency_min"]*METRICS["latency_min"]["scaling
 p3, = ax2.plot(df_0["x_pos"], df_0["transmission_num_avg"]*METRICS["transmission_num_avg"]["scaling"], "C2", label="Avg. tx attempts")
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["latency_avg"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
@@ -43,7 +44,7 @@ ax2.tick_params(axis='both', which='major', labelsize = 14)
 ax2.legend(handles=[p1, p2, p3], prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "00-latency_avg_min-tx_num_avg.png")
+fig.savefig(OUT_FOLDER / "00-latency_avg_min-tx_num_avg.{}".format(OUT_FORMAT))
 
 fig_dict["latency_tx_avg"] = fig
 
@@ -55,14 +56,14 @@ p1, = ax.plot(df_0["x_pos"], df_0["latency_99_perc"]*METRICS["latency_99_perc"][
 p2, = ax.plot(df_0["x_pos"], df_0["latency_99.9_perc"]*METRICS["latency_99.9_perc"]["scaling"], "C1", label = "99.9 perc.")
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["latency_99_perc"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
 ax.legend(prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "00_latency_99_99.9_perc.png")
+fig.savefig(OUT_FOLDER / "00_latency_99_99.9_perc.{}".format(OUT_FORMAT))
 
 fig_dict["percentile"] = fig
 
@@ -76,7 +77,7 @@ p1, = ax.plot(df_0["x_pos"], df_0["power_avg"]*METRICS["power_avg"]["scaling"], 
 p2, = ax2.plot(df_0["x_pos"], df_0["rate_avg"]*METRICS["rate_avg"]["scaling"], "C2", label="Avg. data rate")
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["power_avg"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
@@ -86,7 +87,7 @@ ax2.tick_params(axis='both', which='major', labelsize = 14)
 ax2.legend(handles=[p1, p2],  loc = "center left", prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "00-power-rate.png")
+fig.savefig(OUT_FOLDER / "00-power-rate.{}".format(OUT_FORMAT))
 
 fig_dict["power_rate"] = fig
 
@@ -99,7 +100,7 @@ p2, = ax2.plot(df_0["x_pos"], df_0["transmission_num_max_no_dropped"]*METRICS["t
 
 #ax.set_title(metric, fontsize=20)
 
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["%_dropped"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylim([-10, 110])
 ax.tick_params(axis='both', which='major', labelsize = 14)
@@ -110,7 +111,7 @@ ax2.tick_params(axis='both', which='major', labelsize = 14)
 ax.legend(handles=[p1, p2], loc="upper left", prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "00-dropped-tx_max.png")
+fig.savefig(OUT_FOLDER / "00-dropped-tx_max.{}".format(OUT_FORMAT))
 
 fig_dict["dropped_tx_max"] = fig
 
@@ -140,14 +141,14 @@ for idx, (xy_prev, xy_next) in enumerate(zip(xy_series[:-1], xy_series[1:])):
     fills.append(p)
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["rate_distribution"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
 ax.legend(prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "00-rate_dist.png")
+fig.savefig(OUT_FOLDER / "00-rate_dist.{}".format(OUT_FORMAT))
 
 fig_dict["rate_dist"] = fig
 
@@ -162,14 +163,14 @@ for c_idx, c in enumerate(METRICS["rate_succ_distribution"]["classes"]):
 
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["rate_succ_distribution"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
 ax.legend(prop={'size': 12}, loc="center left")
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "00-rate_success.png")
+fig.savefig(OUT_FOLDER / "00-rate_success.{}".format(OUT_FORMAT))
 
 fig_dict["success_rate_dist"] = fig
 
@@ -198,14 +199,14 @@ for idx, (xy_prev, xy_next) in enumerate(zip(xy_series[:-1], xy_series[1:])):
     fills.append(p)
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["rate_latency_distribution"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
 ax.legend(prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "00-rate_latency.png")
+fig.savefig(OUT_FOLDER / "00-rate_latency.{}".format(OUT_FORMAT))
 
 fig_dict["rate_latency_dist"] = fig
 
@@ -234,14 +235,14 @@ for idx, (xy_prev, xy_next) in enumerate(zip(xy_series[:-1], xy_series[1:])):
     fills.append(p)
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["rate_latency_distribution_with_final"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
 ax.legend(prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "00-rate_latency_with_final.png")
+fig.savefig(OUT_FOLDER / "00-rate_latency_with_final.{}".format(OUT_FORMAT))
 
 fig_dict["rate_latency_with_final_dist"] = fig
 
@@ -268,7 +269,7 @@ for name in fig_to_compare:
     print(ymin, ymax)
     ax.vlines(x=local_max, ymin=ymin, ymax=ymax, colors=['tab:red'], ls='-', lw=.5)
     ax.vlines(x=local_min, ymin=ymin, ymax=ymax, colors=['tab:green'], ls='-', lw=.5)
-    fig.savefig(comp_folder / f"{name}.png")
+    fig.savefig(comp_folder / f"{name}.{OUT_FORMAT}")
 
 
 
@@ -308,7 +309,7 @@ p4, = ax2.plot(df_1["x_pos"], df_1["transmission_num_avg"]*METRICS["transmission
 
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["latency_avg"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
@@ -318,7 +319,7 @@ ax2.tick_params(axis='both', which='major', labelsize = 14)
 ax2.legend(handles=[p1, p2, p3, p4], prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "01_03-latency_avg-tx_num_avg.png")
+fig.savefig(OUT_FOLDER / "01_03-latency_avg-tx_num_avg.{}".format(OUT_FORMAT))
 
 fig_dict["latency_tx_avg"] = fig
 
@@ -335,7 +336,7 @@ p3, = ax2.plot(df_3["x_pos"], df_3["%_dropped"]*METRICS["%_dropped"]["scaling"],
 p4, = ax2.plot(df_1["x_pos"], df_1["%_dropped"]*METRICS["%_dropped"]["scaling"], "C1", label="% dropped (hidden)", linestyle="--")
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["latency_99_perc"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
@@ -345,7 +346,7 @@ ax2.tick_params(axis='both', which='major', labelsize = 14)
 ax2.legend(handles=[p1, p2, p3, p4], prop={'size': 12})
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "01_03-99.9_perc-dropped.png")
+fig.savefig(OUT_FOLDER / "01_03-99.9_perc-dropped.{}".format(OUT_FORMAT))
 
 fig_dict["99.9_perc-dropped"] = fig
 
@@ -363,7 +364,7 @@ p3, = ax2.plot(df_3["x_pos"], df_3["rate_avg"]*METRICS["rate_avg"]["scaling"], "
 p4, = ax2.plot(df_1["x_pos"], df_1["rate_avg"]*METRICS["rate_avg"]["scaling"], "C2", label="Avg. data rate (hidden)", linestyle="--")
 
 #ax.set_title(metric, fontsize=20)
-ax.set_xlabel("SUT position (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel(METRICS["power_avg"]["label"], fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 
@@ -373,7 +374,7 @@ ax2.tick_params(axis='both', which='major', labelsize = 14)
 ax2.legend(handles=[p1, p2, p3, p4], prop={'size': 12}, bbox_to_anchor=(0.605,0.8))
 
 plt.tight_layout()
-fig.savefig(OUT_FOLDER / "01_03-power-rate.png")
+fig.savefig(OUT_FOLDER / "01_03-power-rate.{}".format(OUT_FORMAT))
 
 fig_dict["power-rate"] = fig
 
@@ -381,3 +382,5 @@ fig_dict["power-rate"] = fig
 # %%
 print(df_3["latency_avg"].corr(df_3["transmission_num_avg"]))
 print(df_1["latency_avg"].corr(df_1["transmission_num_avg"]))
+
+# %%
