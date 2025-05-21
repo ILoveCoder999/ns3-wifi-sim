@@ -2,6 +2,8 @@
 #include "packet-info.h"
 #include "utils.h"
 #include "sta-logger.h"
+#include "my-udp-client-helper.h"
+
 
 #include <iostream>
 #include <fstream>
@@ -30,297 +32,217 @@
 #include "ns3/string.h"
 #include "ns3/udp-client-server-helper.h"
 #include "ns3/udp-header.h"
+#include "ns3/waypoint-mobility-model.h"
 #include "ns3/wifi-mac.h"
 #include "ns3/wifi-mpdu.h"
 #include "ns3/wifi-net-device.h"
-#include "my-udp-client-helper.h"
+#include "ns3/csma-module.h"
+#include "ns3/internet-module.h"
+#include "ns3/bridge-helper.h"
 
 #include <chrono>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
 
+#include "ns3/netanim-module.h"
+#include "ns3/timer.h"
+
 using json = nlohmann::json;
 
 using namespace ns3;
 
+NS_LOG_COMPONENT_DEFINE("handover");
 
-NS_LOG_COMPONENT_DEFINE("LatencyTestV2");
+bool ENABLE_PCAP = true;
+bool ANIMATION = false;
+double SIM_TIME = 300;
+uint32_t PORT = 9;
+uint32_t PAYLOAD_SIZE = 22;
+double PACKET_INTERVAL = 0.5;
+
+int pos_counter = 0;
+void courseChangeCallback(Ptr< const MobilityModel > model) {
+    NS_LOG_FUNCTION(pos_counter);
+    pos_counter+=1;
+}
+
+void timerCallback(Timer* timer, Ptr<WaypointMobilityModel> staMobility) {
+    NS_LOG_FUNCTION(Simulator::Now().GetSeconds());
+    NS_LOG_FUNCTION(staMobility->GetPosition());
+    timer->Schedule(Seconds(1));
+}
 
 int main(int argc, char** argv) {
 
-    LogComponentEnable("LatencyTestV2", LOG_LEVEL_DEBUG);
-    LogComponentEnable("StaLogger", LOG_LEVEL_DEBUG);    
+    LogComponentEnable("handover", LOG_LEVEL_DEBUG);
 
-    constexpr uint32_t port = 9;
+    //constexpr uint32_t port = 9;
     std::string outFilePath = "db0.json";
-    std::string jsonConfig = "conf.json";    
-    bool inlineConfig = false;
-
-    CommandLine cmd(__FILE__);
-    cmd.AddValue("jsonConfig", "Json configuration", jsonConfig);
-    cmd.AddValue("outFilePath", "Output file path", outFilePath);
-    cmd.AddValue("inlineConfig", "Provide config inline", inlineConfig);
-    cmd.Parse(argc, argv);
-
-    std::cout << jsonConfig << " " << outFilePath << " " << inlineConfig << std::endl;
-
-    // if (argc < 3)
-    // {
-    //     std::cerr << "Missing parameters" << std::endl;
-    //     return 1;
-    // }
-
-    Arguments args;
-
-    if(inlineConfig)
-    {
-        std::stringstream conf_stream(jsonConfig);
-        conf_stream >> args;
-    }
-    else {
-        std::ifstream arg_file;  
-        arg_file.open(jsonConfig.c_str(), std::ios::in);
-        if(!arg_file)
-        {
-            return 2;
-        }
-        arg_file >> args;
-    }
+    std::string jsonConfig = "conf.json";
+    //bool inlineConfig = false;
 
     // Set seed
     RngSeedManager::SetSeed(1);
-    SeedManager::SetSeed(1);
-    //Packet::EnablePrinting();
+    // Packet::EnablePrinting();
 
-    // Create node containers for AP, STA and interferers
+    // Create nodes
     NodeContainer wifiApNodes;
-    wifiApNodes.Create(args.apNodes.size());
+    //wifiApNodes.Create(2);
+    wifiApNodes.Create(1);
     NodeContainer wifiStaNode;
     wifiStaNode.Create(1);
-    NodeContainer wifiInterfererNodes;
-    wifiInterfererNodes.Create(args.interfererNodes.size());
 
-    // Create spectrum helpers for different physical configuration
-    // (only one will be selected for the simulation)
-    std::vector<SpectrumWifiPhyHelper> spectrumPhys;
-    for (auto &phyConfig : args.phyConfigs)
-    {
-        ObjectFactory factory; // used to create objects from their name (useful for json configuration)
-        SpectrumWifiPhyHelper spectrumPhyHelper;
-        factory.SetTypeId(phyConfig.channel.propagationLossModel);
-        Ptr<SpectrumChannel> spectrumChannel = CreateObject<MultiModelSpectrumChannel>();
-        Ptr<PropagationLossModel> propagationLossModel = DynamicCast<PropagationLossModel>(factory.Create());
-        spectrumChannel->AddPropagationLossModel(propagationLossModel);
-        factory.SetTypeId(phyConfig.channel.propagationDelayModel);
-        Ptr<PropagationDelayModel> propagationDelayModel = DynamicCast<PropagationDelayModel>(factory.Create());
-        spectrumChannel->SetPropagationDelayModel(propagationDelayModel);
-        spectrumPhyHelper.SetChannel(spectrumChannel);
-        spectrumPhyHelper.Set("ChannelSettings", StringValue(phyConfig.channelSettings));
-        spectrumChannel->AssignStreams(100); //allow the deterministic configuration of random variable stream numbers
+    // Create PHY helper
+    SpectrumWifiPhyHelper spectrumPhyHelper;
 
-        spectrumPhys.push_back(spectrumPhyHelper);
-    }
+    Ptr<SpectrumChannel> spectrumChannel = CreateObject<MultiModelSpectrumChannel>();
+    Ptr<PropagationLossModel> propagationLossModel = CreateObject<LogDistancePropagationLossModel>();
+    Ptr<PropagationDelayModel> propagationDelayModel = CreateObject<ConstantSpeedPropagationDelayModel>();
 
+    spectrumChannel->AddPropagationLossModel(propagationLossModel);
+    spectrumChannel->SetPropagationDelayModel(propagationDelayModel);
+
+    spectrumPhyHelper.SetChannel(spectrumChannel);
+    spectrumPhyHelper.Set("ChannelSettings", StringValue("{44,20,BAND_5GHZ,0}"));
+
+    // Creater Wi-Fi helper
     WifiHelper wifi;
     wifi.SetStandard(WIFI_STANDARD_80211a);
-    WifiMacHelper wifiMac;
+    wifi.SetRemoteStationManager("ns3::MinstrelHtWifiManager",
+        "MaxSsrc", UintegerValue(21),
+        "RtsCtsThreshold", UintegerValue(4692480));
+    // wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
+    //     "MaxSsrc", UintegerValue(21),
+    //     "RtsCtsThreshold", UintegerValue(4692480),
+    //     "DataMode", StringValue("OfdmRate6Mbps"));
 
+    // Create mac helper. instal Wifi on nodes to create net devices
     NetDeviceContainer staDevice;
     NetDeviceContainer apDevices;
-    NetDeviceContainer interfererDevices;
 
-    // Set station manager (rate adaptation algorithms, e.g. Minstral)
-    if (args.staNode.remoteStationManager == "ns3::ConstantRateWifiManager")
-    {
-        wifi.SetRemoteStationManager(args.staNode.remoteStationManager,
-            "MaxSsrc", UintegerValue(21),
-            "RtsCtsThreshold", UintegerValue(args.staNode.rtsCtsThreshold),
-            "DataMode", StringValue(args.staNode.dataMode));
-    }
-    else
-    {
-        wifi.SetRemoteStationManager(args.staNode.remoteStationManager,
-            "MaxSsrc", UintegerValue(21),
-            "RtsCtsThreshold", UintegerValue(args.staNode.rtsCtsThreshold));
-    }
+    WifiMacHelper wifiMac;
+    wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
+    staDevice = wifi.Install(spectrumPhyHelper, wifiMac, wifiStaNode);
 
-    // Configure WiFi for STA (with beacons)
-    // Install on STA node together with spectrum
-    wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(args.staNode.ssid));
-    staDevice = wifi.Install(spectrumPhys[args.staNode.phyId], wifiMac, wifiStaNode);
+    wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
+    apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(0)));
+    //apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(1)));
 
-    // Configure and install STA Wifi on interferers
-    for (long unsigned int i = 0;i < args.interfererNodes.size();i++)
-    {
-        const auto& interfererConfig = args.interfererNodes[i];
-        const auto wifiInterferentNode = wifiInterfererNodes.Get(i);
-        // Use STA WiFi config
-        wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(interfererConfig.ssid));
-        // Set rate adaptation algorithm
-        if (interfererConfig.remoteStationManager == "ns3::ConstantRateWifiManager")
-        {
-            wifi.SetRemoteStationManager(interfererConfig.remoteStationManager,
-                "MaxSsrc", UintegerValue(21),
-                "RtsCtsThreshold", UintegerValue(interfererConfig.rtsCtsThreshold),
-                "DataMode", StringValue(interfererConfig.dataMode));
-        }
-        else
-        {
-            wifi.SetRemoteStationManager(interfererConfig.remoteStationManager,
-                "MaxSsrc", UintegerValue(21),
-                "RtsCtsThreshold", UintegerValue(interfererConfig.rtsCtsThreshold));
-        }
-        interfererDevices.Add(wifi.Install(spectrumPhys[interfererConfig.phyId], wifiMac, wifiInterferentNode));
-    }
-
-    // Map SSID to node number for APs
-    std::unordered_map<std::string, long unsigned int> apNodesLookup;
-
-    // Configure WiFi for APs
-    for (long unsigned int i = 0; i < args.apNodes.size(); i++)
-    {
-        const auto& apConfig = args.apNodes[i];
-        const auto wifiApNode = wifiApNodes.Get(i);
-        wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(apConfig.ssid));
-        wifi.SetRemoteStationManager("ns3::MinstrelHtWifiManager");
-        apDevices.Add(wifi.Install(spectrumPhys[apConfig.phyId], wifiMac, wifiApNode));
-        apNodesLookup.insert({ apConfig.ssid, i });
-    }
-
-    // Enable pcap on all nodes (physical layer)
-    if (args.enablePcap)
-    {
-        for (auto &spectrumPhy : spectrumPhys)
-        {
-            spectrumPhy.SetPcapDataLinkType(WifiPhyHelper::DLT_IEEE802_11_RADIO);
-        }
-        for (long unsigned int i = 0;i < args.apNodes.size();i++)
-        {
-            spectrumPhys[args.apNodes[i].phyId].EnablePcap(args.pcapPrefix + "latency-test-ap", apDevices.Get(i));
-        }
-        for (long unsigned int i = 0;i < args.interfererNodes.size();i++)
-        {
-            spectrumPhys[args.interfererNodes[i].phyId].EnablePcap(args.pcapPrefix + "latency-test-interferer", interfererDevices.Get(i));
-        }
-        spectrumPhys[args.staNode.phyId].EnablePcap(args.pcapPrefix + "latency-test-sta", staDevice);
-    }
-
-    // Create vector of position for APs, STA, and interferers
+    // Create vector of positions for the two APs
     Ptr<ListPositionAllocator> positionAllocator = CreateObject<ListPositionAllocator>();
-    for (const auto &apConfig : args.apNodes)
-    {
-        positionAllocator->Add(Vector(apConfig.position.x, apConfig.position.y, apConfig.position.z));
-    }
+    positionAllocator->Add(Vector(50, 0, 0));
+    //positionAllocator->Add(Vector(100, 0, 0));
 
-    positionAllocator->Add(Vector(args.staNode.position.x, args.staNode.position.y, args.staNode.position.z));
-
-    for (const auto &interfererConf : args.interfererNodes)
-    {
-        positionAllocator->Add(Vector(interfererConf.position.x, interfererConf.position.y, interfererConf.position.z));
-    }
-
-    // Configure mobility model (with type and vector of positions)
+    // Configure and install mobility for APs
     MobilityHelper mobility;
     mobility.SetPositionAllocator(positionAllocator);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
-
-    // Install mobility model on nodes (probably goes through the vector of positions)
     mobility.Install(wifiApNodes);
+
+    // Configure and install mobility model for STA
+    mobility.SetMobilityModel("ns3::WaypointMobilityModel");
     mobility.Install(wifiStaNode);
-    mobility.Install(wifiInterfererNodes);
+    Ptr<WaypointMobilityModel> staMobilityModel = DynamicCast<WaypointMobilityModel>(wifiStaNode.Get(0)->GetObject<MobilityModel>());
+    staMobilityModel->AddWaypoint(Waypoint(Seconds(0),Vector(0, 0, 0)));
+    staMobilityModel->AddWaypoint(Waypoint(Seconds(300), Vector(150, 0, 0)));
+    //staMobilityModel->AddWaypoint(Waypoint(Seconds(600), Vector(0, 0, 0)));
+
+    std::stringstream ss;
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/$ns3::MobilityModel/$ns3::WaypointMobilityModel/CourseChange";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&courseChangeCallback));
+
+    // // Adding LAN nodes
+    NodeContainer csmaNodes;
+    csmaNodes.Create(1);
+    csmaNodes.Add(wifiApNodes);
+
+    // Configure CSMA
+    CsmaHelper csma;
+    csma.SetChannelAttribute("DataRate", StringValue("100Mbps"));
+    csma.SetChannelAttribute("Delay", TimeValue(NanoSeconds(6560)));
+    csma.SetDeviceAttribute("EncapsulationMode", StringValue("Llc"));
+    csma.SetDeviceAttribute("Mtu", UintegerValue(1492)); // to be in spec when using LLC (size not more than 1518)
+    
+    // Create CSMA devices
+    NetDeviceContainer csmaDevices;
+    csmaDevices = csma.Install(csmaNodes);
+
+    //Configure bridge
+    BridgeHelper brh;
+    NetDeviceContainer bridgeDevices, toBridgeDevices;
+    toBridgeDevices.Add(apDevices.Get(0));
+    toBridgeDevices.Add(csmaDevices.Get(1));
+    bridgeDevices = brh.Install(wifiApNodes.Get(0), toBridgeDevices);
 
     // Install internet stack
     InternetStackHelper internetStack;
+    // stack.SetRoutingHelper();
     internetStack.Install(wifiApNodes);
     internetStack.Install(wifiStaNode);
-    internetStack.Install(wifiInterfererNodes);
+    internetStack.Install(csmaNodes.Get(0));
 
-    // Configure IP addresses on same subnet
-    Ipv4AddressHelper ipv4Address;
-    ipv4Address.SetBase("192.168.1.0", "255.255.255.0");
-    Ipv4InterfaceContainer apNodesInterfaces;
-    Ipv4InterfaceContainer staNodeInterface;
-    Ipv4InterfaceContainer interfererNodesInterfaces;
+    // Create Wi-Fi and LAN subnets
+    Ipv4AddressHelper address;
 
-    apNodesInterfaces = ipv4Address.Assign(apDevices);
-    staNodeInterface = ipv4Address.Assign(staDevice);
-    interfererNodesInterfaces = ipv4Address.Assign(interfererDevices);
+    Ipv4InterfaceContainer apInterfaces, staInterface;
+    address.SetBase("192.168.1.0", "255.255.255.0");
+    staInterface = address.Assign(staDevice);    
+    apInterfaces = address.Assign(apDevices);    
+
+    Ipv4InterfaceContainer csmaInterfaces;
+    //address.SetBase("192.168.2.0", "255.255.255.0");    
+    csmaInterfaces = address.Assign(csmaDevices);
 
     // Install applications on nodes
     ApplicationContainer clientApp;
     ApplicationContainer serverApp;
-    ApplicationContainer interfererApps;
 
     // UDP server on APs (set start time)
-    UdpServerHelper server(port);
-    serverApp = server.Install(wifiApNodes);
-    serverApp.Start(Seconds(1.0));
-    serverApp.Stop(Seconds(args.simulationTime + 1));
+    UdpServerHelper server(PORT);
+    serverApp = server.Install(csmaNodes.Get(0));
+    serverApp.Start(Seconds(1));
+    serverApp.Stop(Seconds(SIM_TIME + 1));
 
     // Custom UDP client on STA
-    MyUdpClientHelper client(apNodesInterfaces.GetAddress(apNodesLookup[args.staNode.ssid]), port);
+    MyUdpClientHelper client(csmaInterfaces.GetAddress(0), PORT);
     client.SetAttribute("MaxPackets", UintegerValue(4294967295U));
-    client.SetAttribute("Interval", TimeValue(Seconds(args.staNode.packetInterval)));
+    client.SetAttribute("Interval", TimeValue(Seconds(PACKET_INTERVAL)));
     client.SetAttribute("IntervalJitter", StringValue("ns3::UniformRandomVariable[Min=-0.000025|Max=0.000075]"));
-    client.SetAttribute("PacketSize", UintegerValue(args.staNode.payloadSize));
+    client.SetAttribute("PacketSize", UintegerValue(PAYLOAD_SIZE));
     clientApp = client.Install(wifiStaNode);
-    clientApp.Start(Seconds(1.0));
-    clientApp.Stop(Seconds(args.simulationTime + 1));
+    clientApp.Start(Seconds(1));
+    clientApp.Stop(Seconds(SIM_TIME + 1));
 
-    // Custom UDP client on interferers
-    InterfererApplicationHelper interfererHelper;
-    for (long unsigned int i = 0;i < args.interfererNodes.size();i++)
+    // Enable pcap on all nodes (physical layer)
+    if (ENABLE_PCAP)
     {
-        const auto &interfererConfig = args.interfererNodes[i];
-        interfererHelper.SetAttribute("PeerAddress", Ipv4AddressValue(apNodesInterfaces.GetAddress(apNodesLookup[interfererConfig.ssid])));
-        interfererHelper.SetAttribute("OffTime", StringValue(interfererConfig.offTime));
-        interfererHelper.SetAttribute("BurstSize", StringValue(interfererConfig.burstSize));
-        interfererHelper.SetAttribute("BurstPacketsInterval", TimeValue(MicroSeconds(interfererConfig.burstPacketsIntervalMicroSeconds)));
-        interfererHelper.SetAttribute("BurstPacketsSize", UintegerValue(interfererConfig.burstPacketsSize));
-        interfererApps.Add(interfererHelper.Install(wifiInterfererNodes.Get(i)));
+        spectrumPhyHelper.SetPcapDataLinkType(WifiPhyHelper::DLT_IEEE802_11_RADIO);
+        spectrumPhyHelper.EnablePcap("handover-sta", staDevice);
+        spectrumPhyHelper.EnablePcap("handover-ap", apDevices.Get(0));
+        //spectrumPhyHelper.EnablePcap("handover-ap", apDevices.Get(1));
+
+        csma.EnablePcapAll("handover-csma", true);
     }
-    interfererApps.Start(Seconds(1.0));
-    interfererApps.Stop(Seconds(args.simulationTime + 1));
 
-
-    // create STA logger
-    STALogger sta_logger(outFilePath, args, DynamicCast<WifiNetDevice>(staDevice.Get(0)));
-    sta_logger.logHeader();
-
-    // Tracing for sent packets
-    std::stringstream ss;
-    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxPsduBegin";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::sendingMpduCallback,  &sta_logger));
-
-    // Tracing for acked packets
-    ss.str(std::string());
-    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/AckedMpdu";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::ackedMpduCallback, &sta_logger));
-
-    // Tracing for response timeout
-    ss.str(std::string());
-    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/MpduResponseTimeout";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::mpduTimeoutCallback, &sta_logger));
-
-    // Tracing for dropped packets
-    ss.str(std::string());
-    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/DroppedMpdu";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::droppedMpduCallback, &sta_logger));
-
-    // Populate Arp Cache
-    PopulateArpCache();
+    // Populate Arp Cache and routing tables
+    // PopulateArpCache();
+    // Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
     // Start simulation
-    Simulator::Stop(Seconds(args.simulationTime + 1));
-    auto start = std::chrono::high_resolution_clock::now();
+    Simulator::Stop(Seconds(SIM_TIME));
+
+    if(ANIMATION) {
+        AnimationInterface anim ("handover_anim.xml");
+    }
+
+    Timer timer = Timer();
+    timer.SetFunction(&timerCallback);
+    timer.SetArguments(&timer, staMobilityModel);
+    timer.Schedule(Seconds(1));
+
+    //Simulator::Schedule(Seconds(0.1), &Ipv4GlobalRoutingHelper::RecomputeRoutingTables);
+
     Simulator::Run();
-
-    // Log duration of simulation
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
-
-    sta_logger.logFooter(duration);
-
     Simulator::Destroy();
     return 0;
 }

@@ -1,6 +1,14 @@
 # Code information
 This file contains notes about the code in this folder
 
+## ns3 documentation
+
+- [Object model/Aggregation](https://www.nsnam.org/docs/manual/html/object-model.html)
+- [Wifi module - User documentation](https://www.nsnam.org/docs/models/html/wifi-user.html)
+- [Mobility module](https://www.nsnam.org/docs/models/html/mobility.html#mobility)
+- [Building topologies (Tutorial)](https://www.nsnam.org/docs/release/3.44/tutorial/html/building-topologies.html#building-a-wireless-network-topology)
+- [Random Variables](https://www.nsnam.org/docs/manual/html/random-variables.html#seeding-and-independent-replications)
+
 ## latency-test-v2 (for latency maps)
 
 NS3 WiFi documentation
