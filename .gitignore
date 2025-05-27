@@ -2,3 +2,6 @@ build
 cmake-cache
 .lock-ns3_linux_build
 *.pcap
+handover_assoc_log.dat
+handover_sta_log.json
+out.json

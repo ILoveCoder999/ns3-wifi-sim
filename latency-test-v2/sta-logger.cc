@@ -10,15 +10,15 @@
 
 NS_LOG_COMPONENT_DEFINE("StaLogger");
 
-STALogger::STALogger(std::string out_file_path, Arguments args, Ptr<WifiNetDevice> net_dev): _net_dev(net_dev), _args(args)
+STALogger::STALogger(std::string out_file_path, std::string header, Ptr<WifiNetDevice> net_dev, Ptr<MobilityModel> mobility):
+     _header(header), _net_dev(net_dev), _mobility(mobility)
 {
-    AsciiTraceHelper asciiHelper;
     _output_file.open(out_file_path.c_str(), std::ios::out | std::ios::trunc);
 }
 
 void STALogger::logHeader()
 {
-    _output_file << "[" << std::endl << json(_args);
+    _output_file << "[" << std::endl << _header;
 }
 
 void STALogger::logFooter(std::chrono::seconds duration)
@@ -59,10 +59,10 @@ void STALogger::sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVec
                 const auto it = _packets.find(seqTsHeader.GetSeq());
                 PacketInfo info {seqTsHeader.GetSeq()};
                 
-                uint32_t payload_size = p->GetSize() + seqTsHeader.GetSerializedSize();
-                if (payload_size != _args.staNode.payloadSize) {
-                    NS_FATAL_ERROR("Mismatching payload size: original " << _args.staNode.payloadSize << ", obtained " << payload_size);
-                }
+                // uint32_t payload_size = p->GetSize() + seqTsHeader.GetSerializedSize();
+                // if (payload_size != _args.staNode.payloadSize) {
+                //     NS_FATAL_ERROR("Mismatching payload size: original " << _args.staNode.payloadSize << ", obtained " << payload_size);
+                // }
 
                 if (it != _packets.end())
                 {
@@ -75,7 +75,10 @@ void STALogger::sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVec
                 info.current_tx = std::make_shared<TransmissionInfo>();
                 info.current_tx->rate = txVector.GetMode().GetDataRate(txVector);
                 info.current_tx->tx_power_w = txPowerW;
-                info.current_tx->tx_time = WifiPhy::CalculateTxDuration(psdu, txVector, _net_dev->GetPhy()->GetPhyBand());
+                info.current_tx->tx_duration = WifiPhy::CalculateTxDuration(psdu, txVector, _net_dev->GetPhy()->GetPhyBand());
+                Vector position = _mobility->GetPosition();
+                info.current_tx->position = std::make_tuple(position.x, position.y, position.z);
+                info.current_tx->tx_time = Simulator::Now();
                 _packets.insert_or_assign(seqTsHeader.GetSeq(), info);
             }
         }

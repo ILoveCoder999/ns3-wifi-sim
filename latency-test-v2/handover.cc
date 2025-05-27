@@ -3,11 +3,13 @@
 #include "utils.h"
 #include "sta-logger.h"
 #include "my-udp-client-helper.h"
-
+#include "assoc-logger.h"
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <chrono>
+#include <unordered_map>
 
 #include "ns3/application-container.h"
 #include "ns3/arp-cache.h"
@@ -40,25 +42,29 @@
 #include "ns3/internet-module.h"
 #include "ns3/bridge-helper.h"
 
-#include <chrono>
-#include <nlohmann/json.hpp>
-#include <unordered_map>
-
 #include "ns3/netanim-module.h"
 #include "ns3/timer.h"
 
+#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 using namespace ns3;
-
 NS_LOG_COMPONENT_DEFINE("handover");
 
-bool ENABLE_PCAP = true;
-bool ANIMATION = false;
-double SIM_TIME = 300;
-uint32_t PORT = 9;
-uint32_t PAYLOAD_SIZE = 22;
-double PACKET_INTERVAL = 0.5;
+struct HandoverConfig {
+    bool ENABLE_PCAP = true;
+    bool ANIMATION = false;
+    double SIM_TIME = 600;
+    uint32_t PORT = 9;
+    uint32_t PAYLOAD_SIZE = 22;
+    double PACKET_INTERVAL = 0.5;
+    std::string STA_LOG_PATH = "handover_sta_log.json";
+    std::string ASSOC_LOG_PATH = "handover_assoc_log.dat";
+    //bool inlineConfig = false;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
+    HandoverConfig, ENABLE_PCAP, ANIMATION, SIM_TIME, PORT, PAYLOAD_SIZE, PACKET_INTERVAL, STA_LOG_PATH, ASSOC_LOG_PATH);
 
 int pos_counter = 0;
 void courseChangeCallback(Ptr< const MobilityModel > model) {
@@ -73,24 +79,26 @@ void timerCallback(Timer* timer, Ptr<WaypointMobilityModel> staMobility) {
 }
 
 int main(int argc, char** argv) {
+    
+    HandoverConfig sim_config;
 
     LogComponentEnable("handover", LOG_LEVEL_DEBUG);
 
-    //constexpr uint32_t port = 9;
-    std::string outFilePath = "db0.json";
-    std::string jsonConfig = "conf.json";
-    //bool inlineConfig = false;
 
     // Set seed
     RngSeedManager::SetSeed(1);
     // Packet::EnablePrinting();
 
-    // Create nodes
+    // Create Wi-Fi nodes
     NodeContainer wifiApNodes;
-    //wifiApNodes.Create(2);
-    wifiApNodes.Create(1);
+    wifiApNodes.Create(2);
     NodeContainer wifiStaNode;
     wifiStaNode.Create(1);
+
+    // Adding LAN nodes
+    NodeContainer csmaNodes;
+    csmaNodes.Add(wifiApNodes); // AP also have csma interface
+    csmaNodes.Create(1);
 
     // Create PHY helper
     SpectrumWifiPhyHelper spectrumPhyHelper;
@@ -126,35 +134,7 @@ int main(int argc, char** argv) {
 
     wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
     apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(0)));
-    //apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(1)));
-
-    // Create vector of positions for the two APs
-    Ptr<ListPositionAllocator> positionAllocator = CreateObject<ListPositionAllocator>();
-    positionAllocator->Add(Vector(50, 0, 0));
-    //positionAllocator->Add(Vector(100, 0, 0));
-
-    // Configure and install mobility for APs
-    MobilityHelper mobility;
-    mobility.SetPositionAllocator(positionAllocator);
-    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
-    mobility.Install(wifiApNodes);
-
-    // Configure and install mobility model for STA
-    mobility.SetMobilityModel("ns3::WaypointMobilityModel");
-    mobility.Install(wifiStaNode);
-    Ptr<WaypointMobilityModel> staMobilityModel = DynamicCast<WaypointMobilityModel>(wifiStaNode.Get(0)->GetObject<MobilityModel>());
-    staMobilityModel->AddWaypoint(Waypoint(Seconds(0),Vector(0, 0, 0)));
-    staMobilityModel->AddWaypoint(Waypoint(Seconds(300), Vector(150, 0, 0)));
-    //staMobilityModel->AddWaypoint(Waypoint(Seconds(600), Vector(0, 0, 0)));
-
-    std::stringstream ss;
-    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/$ns3::MobilityModel/$ns3::WaypointMobilityModel/CourseChange";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&courseChangeCallback));
-
-    // // Adding LAN nodes
-    NodeContainer csmaNodes;
-    csmaNodes.Create(1);
-    csmaNodes.Add(wifiApNodes);
+    apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(1)));
 
     // Configure CSMA
     CsmaHelper csma;
@@ -169,28 +149,30 @@ int main(int argc, char** argv) {
 
     //Configure bridge
     BridgeHelper brh;
-    NetDeviceContainer bridgeDevices, toBridgeDevices;
-    toBridgeDevices.Add(apDevices.Get(0));
-    toBridgeDevices.Add(csmaDevices.Get(1));
-    bridgeDevices = brh.Install(wifiApNodes.Get(0), toBridgeDevices);
+    NetDeviceContainer bridgeDevices, toBridgeDevicesAP1, toBridgeDevicesAP2;
+    toBridgeDevicesAP1.Add(apDevices.Get(0));
+    toBridgeDevicesAP1.Add(csmaDevices.Get(0));
+    bridgeDevices = brh.Install(wifiApNodes.Get(0), toBridgeDevicesAP1);
+    toBridgeDevicesAP2.Add(apDevices.Get(1));
+    toBridgeDevicesAP2.Add(csmaDevices.Get(1));
+    bridgeDevices.Add(brh.Install(wifiApNodes.Get(1), toBridgeDevicesAP2));
 
     // Install internet stack
     InternetStackHelper internetStack;
-    // stack.SetRoutingHelper();
     internetStack.Install(wifiApNodes);
     internetStack.Install(wifiStaNode);
-    internetStack.Install(csmaNodes.Get(0));
+    internetStack.Install(csmaNodes.Get(2));
 
     // Create Wi-Fi and LAN subnets
     Ipv4AddressHelper address;
 
     Ipv4InterfaceContainer apInterfaces, staInterface;
     address.SetBase("192.168.1.0", "255.255.255.0");
-    staInterface = address.Assign(staDevice);    
-    apInterfaces = address.Assign(apDevices);    
+    staInterface = address.Assign(staDevice);
+    apInterfaces = address.Assign(apDevices);
 
     Ipv4InterfaceContainer csmaInterfaces;
-    //address.SetBase("192.168.2.0", "255.255.255.0");    
+    //address.SetBase("192.168.2.0", "255.255.255.0");
     csmaInterfaces = address.Assign(csmaDevices);
 
     // Install applications on nodes
@@ -198,29 +180,108 @@ int main(int argc, char** argv) {
     ApplicationContainer serverApp;
 
     // UDP server on APs (set start time)
-    UdpServerHelper server(PORT);
-    serverApp = server.Install(csmaNodes.Get(0));
+    UdpServerHelper server(sim_config.PORT);
+    serverApp = server.Install(csmaNodes.Get(2));
     serverApp.Start(Seconds(1));
-    serverApp.Stop(Seconds(SIM_TIME + 1));
+    serverApp.Stop(Seconds(sim_config.SIM_TIME + 1));
 
     // Custom UDP client on STA
-    MyUdpClientHelper client(csmaInterfaces.GetAddress(0), PORT);
+    MyUdpClientHelper client(csmaInterfaces.GetAddress(2), sim_config.PORT);
     client.SetAttribute("MaxPackets", UintegerValue(4294967295U));
-    client.SetAttribute("Interval", TimeValue(Seconds(PACKET_INTERVAL)));
+    client.SetAttribute("Interval", TimeValue(Seconds(sim_config.PACKET_INTERVAL)));
     client.SetAttribute("IntervalJitter", StringValue("ns3::UniformRandomVariable[Min=-0.000025|Max=0.000075]"));
-    client.SetAttribute("PacketSize", UintegerValue(PAYLOAD_SIZE));
+    client.SetAttribute("PacketSize", UintegerValue(sim_config.PAYLOAD_SIZE));
     clientApp = client.Install(wifiStaNode);
     clientApp.Start(Seconds(1));
-    clientApp.Stop(Seconds(SIM_TIME + 1));
+    clientApp.Stop(Seconds(sim_config.SIM_TIME + 1));
+
+    // Create vector of positions for the two APs
+    Ptr<ListPositionAllocator> positionAllocator = CreateObject<ListPositionAllocator>();
+    positionAllocator->Add(Vector(50, 0, 0));
+    positionAllocator->Add(Vector(100, 0, 0));
+    
+    // Configure and install mobility for APs
+    MobilityHelper mobility;
+    mobility.SetPositionAllocator(positionAllocator);
+    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+    mobility.Install(wifiApNodes);
+
+    // Configure and install mobility model for STA
+    mobility.SetMobilityModel("ns3::WaypointMobilityModel");
+    mobility.Install(wifiStaNode);
+    Ptr<WaypointMobilityModel> staMobilityModel = DynamicCast<WaypointMobilityModel>(wifiStaNode.Get(0)->GetObject<MobilityModel>());
+    staMobilityModel->AddWaypoint(Waypoint(Seconds(0),Vector(0, 0, 0)));
+    staMobilityModel->AddWaypoint(Waypoint(Seconds(300), Vector(150, 0, 0)));
+    staMobilityModel->AddWaypoint(Waypoint(Seconds(600), Vector(0, 0, 0)));
+    
+    // Create STA logger
+    std::stringstream ss;
+    ss << json(sim_config);
+    STALogger sta_logger(sim_config.STA_LOG_PATH, ss.str(), DynamicCast<WifiNetDevice>(staDevice.Get(0)), staMobilityModel);
+    sta_logger.logHeader();
+
+    // Tracing for sent packets
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxPsduBegin";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::sendingMpduCallback,  &sta_logger));
+
+    // Tracing for acked packets
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/AckedMpdu";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::ackedMpduCallback, &sta_logger));
+
+    // Tracing for response timeout
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/MpduResponseTimeout";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::mpduTimeoutCallback, &sta_logger));
+
+    // Tracing for dropped packets
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/DroppedMpdu";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::droppedMpduCallback, &sta_logger));
+    
+    // Tracing for course changes
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/$ns3::MobilityModel/$ns3::WaypointMobilityModel/CourseChange";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&courseChangeCallback));
+
+    // Assoclogger
+    AssocLogger assoc_logger(sim_config.ASSOC_LOG_PATH, "log test",  staMobilityModel);
+    assoc_logger.logHeader();
+    
+    // Tracing new association
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/Assoc";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&AssocLogger::assocCallback, &assoc_logger));
+
+    // Tracing de-association
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/DeAssoc";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&AssocLogger::deAssocCallback, &assoc_logger));
+
+    // Tracing beacon arrival
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/BeaconArrival";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&AssocLogger::beaconArrivalCallback, &assoc_logger));
+
+    // Tracing new beacon info
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/ReceivedBeaconInfo";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&AssocLogger::receivedBeaconInfoCallback, &assoc_logger));
+
+    // Tracing for mobility (polling)
+    Timer timer = Timer();
+    timer.SetFunction(&timerCallback);
+    timer.SetArguments(&timer, staMobilityModel);
+    timer.Schedule(Seconds(1));
 
     // Enable pcap on all nodes (physical layer)
-    if (ENABLE_PCAP)
+    if (sim_config.ENABLE_PCAP)
     {
         spectrumPhyHelper.SetPcapDataLinkType(WifiPhyHelper::DLT_IEEE802_11_RADIO);
         spectrumPhyHelper.EnablePcap("handover-sta", staDevice);
         spectrumPhyHelper.EnablePcap("handover-ap", apDevices.Get(0));
-        //spectrumPhyHelper.EnablePcap("handover-ap", apDevices.Get(1));
-
+        spectrumPhyHelper.EnablePcap("handover-ap", apDevices.Get(1));
         csma.EnablePcapAll("handover-csma", true);
     }
 
@@ -229,20 +290,21 @@ int main(int argc, char** argv) {
     // Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
     // Start simulation
-    Simulator::Stop(Seconds(SIM_TIME));
+    Simulator::Stop(Seconds(sim_config.SIM_TIME));
 
-    if(ANIMATION) {
+    if(sim_config.ANIMATION) {
         AnimationInterface anim ("handover_anim.xml");
     }
 
-    Timer timer = Timer();
-    timer.SetFunction(&timerCallback);
-    timer.SetArguments(&timer, staMobilityModel);
-    timer.Schedule(Seconds(1));
-
-    //Simulator::Schedule(Seconds(0.1), &Ipv4GlobalRoutingHelper::RecomputeRoutingTables);
-
+    auto start = std::chrono::high_resolution_clock::now();
     Simulator::Run();
+
+    // Log duration of simulation
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+    sta_logger.logFooter(duration);
+    assoc_logger.logFooter();
+
     Simulator::Destroy();
     return 0;
 }
