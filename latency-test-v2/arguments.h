@@ -79,6 +79,25 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(InterfererConfig,
   ssid,
   phyId)
 
+struct StaMobility
+{
+  std::string mobilityModel = "ns3::ConstantPositionMobilityModel";  //"ns3::WaypointMobilityModel";
+  Position startPos{};
+  Position endPos{};  
+  double tripTime = 0;
+  double timeOffset = 3;
+  uint32_t repetitions = 1;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(StaMobility,
+  mobilityModel,
+  startPos,
+  endPos,
+  tripTime,
+  timeOffset,
+  repetitions
+)
+
 struct StaConfig
 {
   Position position{};
@@ -89,6 +108,7 @@ struct StaConfig
   std::string dataMode = "OfdmRate6Mbps";
   std::string ssid;
   long unsigned int phyId;
+  StaMobility mobility{};
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(StaConfig,
@@ -99,7 +119,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(StaConfig,
   remoteStationManager,
   dataMode,
   ssid,
-  phyId)
+  phyId,
+  mobility)
 
 struct Arguments
 {
@@ -110,9 +131,10 @@ struct Arguments
   double simulationTime = 10;
   bool enablePcap = false;
   std::string pcapPrefix = "";
+  uint64_t runNumber = 1;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Arguments, staNode, phyConfigs, apNodes, interfererNodes, simulationTime, enablePcap, pcapPrefix)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Arguments, staNode, phyConfigs, apNodes, interfererNodes, simulationTime, enablePcap, pcapPrefix, runNumber)
 
 inline std::ostream& operator<<(std::ostream& stream, const Arguments& arguments)
 {

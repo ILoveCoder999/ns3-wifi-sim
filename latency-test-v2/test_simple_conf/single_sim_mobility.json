@@ -1,0 +1,57 @@
+{
+    "staNode": {
+      "position": {
+        "x": 5,
+        "y": 0,
+        "z": 0.0
+      },
+      "payloadSize": 22,
+      "packetInterval": 0.5,
+      "rtsCtsThreshold": 4692480,
+      "remoteStationManager": "ns3::MinstrelHtWifiManager",
+      "dataMode": "OfdmRate6Mbps",
+      "ssid": "ssid_1",
+      "phyId": 0,
+      "mobility": {
+        "mobilityModel": "ns3::WaypointMobilityModel",
+        "startPos" : {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "endPos" : {
+          "x": 51,
+          "y": 0,
+          "z": 0
+        },
+        "tripTime" : 51,
+        "timeOffset" : 2.25,
+        "repetitions" : 10
+      }
+    },
+    "phyConfigs": [
+      {
+        "channelSettings": "{44,20,BAND_5GHZ,0}",
+        "channel": {
+          "propagationLossModel": "ns3::LogDistancePropagationLossModel",
+          "propagationDelayModel": "ns3::ConstantSpeedPropagationDelayModel"
+        }
+      }
+    ],
+    "apNodes": [
+      {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0.0
+        },
+        "ssid": "ssid_1",
+        "phyId": 0
+      }
+    ],
+    "interfererNodes": [],
+    "simulationTime": 5000,
+    "enablePcap": false,
+    "pcapPrefix": "",
+    "runNumber": 2
+}

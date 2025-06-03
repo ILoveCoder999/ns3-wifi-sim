@@ -61,6 +61,16 @@ class InterfererConfig:
 
 
 @nested_dataclass
+class StaMobility:
+    mobilityModel: str = "ns3::ConstantPositionMobilityModel"  #"ns3::WaypointMobilityModel"
+    startPos: Position = field(default_factory=Position)
+    endPos: Position = field(default_factory=Position)
+    tripTime: float = 0
+    timeOffset: float = 3
+    repetitions: int = 1
+    
+
+@nested_dataclass
 class StaConfig:
     position: Position = field(default_factory=Position)
     payloadSize: int = 50
@@ -70,6 +80,7 @@ class StaConfig:
     dataMode: str = "OfdmRate6Mbps"
     ssid: str = "ssid_1"
     phyId: int = 0
+    mobility: StaMobility =  field(default_factory=StaMobility)
 
 
 @nested_dataclass
@@ -81,6 +92,7 @@ class JsonConfig:
     simulationTime: float = 10
     enablePcap: bool = False
     pcapPrefix: str = ""
+    runNumber: int = 1
 
 
 class JsonConfigEncoder(json.JSONEncoder):

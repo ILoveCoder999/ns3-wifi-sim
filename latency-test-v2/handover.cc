@@ -84,7 +84,6 @@ int main(int argc, char** argv) {
 
     LogComponentEnable("handover", LOG_LEVEL_DEBUG);
 
-
     // Set seed
     RngSeedManager::SetSeed(1);
     // Packet::EnablePrinting();

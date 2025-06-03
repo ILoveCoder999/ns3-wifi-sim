@@ -11,12 +11,12 @@
             "program": "${workspaceFolder}/build/${fileBasenameNoExtension}/ns3-dev-${fileBasenameNoExtension}-${input:buildType}", //debug or optimized
             //"program": "${workspaceFolder}/build/${relativeFileDirname}/ns3-dev-${fileBasenameNoExtension}", //release    
             
-            // "args": [
-            //     "--jsonConfig=latency-test-v2/test_simple_conf/single_sim_60m.json",
-            //     //"--jsonConfig={\\\"apNodes\\\":[{\\\"phyId\\\":0\\,\\\"position\\\":{\\\"x\\\":0.0\\,\\\"y\\\":0.0\\,\\\"z\\\":0.0}\\,\\\"ssid\\\":\\\"ssid_1\\\"}]\\,\\\"enablePcap\\\":false\\,\\\"interfererNodes\\\":[]\\,\\\"pcapPrefix\\\":\\\"\\\"\\,\\\"phyConfigs\\\":[{\\\"channel\\\":{\\\"propagationDelayModel\\\":\\\"ns3::ConstantSpeedPropagationDelayModel\\\"\\,\\\"propagationLossModel\\\":\\\"ns3::LogDistancePropagationLossModel\\\"}\\,\\\"channelSettings\\\":\\\"{44\\,20\\,BAND_5GHZ\\,0}\\\"}]\\,\\\"simulationTime\\\":30000.0\\,\\\"staNode\\\":{\\\"dataMode\\\":\\\"OfdmRate6Mbps\\\"\\,\\\"packetInterval\\\":0.5\\,\\\"payloadSize\\\":22\\,\\\"phyId\\\":0\\,\\\"position\\\":{\\\"x\\\":-20.0\\,\\\"y\\\":-20.0\\,\\\"z\\\":0.0}\\,\\\"remoteStationManager\\\":\\\"ns3::MinstrelHtWifiManager\\\"\\,\\\"rtsCtsThreshold\\\":4692480\\,\\\"ssid\\\":\\\"ssid_1\\\"}}",
-            //     "--outFilePath=latency-test-v2/test_simple_conf/db.json",
-            //     //"--inlineConfig"
-            // ],
+            "args": [
+                "--jsonConfig=latency-test-v2/test_simple_conf/single_sim_mobility.json",
+                //"--jsonConfig={\\\"apNodes\\\":[{\\\"phyId\\\":0\\,\\\"position\\\":{\\\"x\\\":0.0\\,\\\"y\\\":0.0\\,\\\"z\\\":0.0}\\,\\\"ssid\\\":\\\"ssid_1\\\"}]\\,\\\"enablePcap\\\":false\\,\\\"interfererNodes\\\":[]\\,\\\"pcapPrefix\\\":\\\"\\\"\\,\\\"phyConfigs\\\":[{\\\"channel\\\":{\\\"propagationDelayModel\\\":\\\"ns3::ConstantSpeedPropagationDelayModel\\\"\\,\\\"propagationLossModel\\\":\\\"ns3::LogDistancePropagationLossModel\\\"}\\,\\\"channelSettings\\\":\\\"{44\\,20\\,BAND_5GHZ\\,0}\\\"}]\\,\\\"simulationTime\\\":30000.0\\,\\\"staNode\\\":{\\\"dataMode\\\":\\\"OfdmRate6Mbps\\\"\\,\\\"packetInterval\\\":0.5\\,\\\"payloadSize\\\":22\\,\\\"phyId\\\":0\\,\\\"position\\\":{\\\"x\\\":-20.0\\,\\\"y\\\":-20.0\\,\\\"z\\\":0.0}\\,\\\"remoteStationManager\\\":\\\"ns3::MinstrelHtWifiManager\\\"\\,\\\"rtsCtsThreshold\\\":4692480\\,\\\"ssid\\\":\\\"ssid_1\\\"}}",
+                //"--outFilePath=latency-test-v2/test_simple_conf/db.json",
+                //"--inlineConfig"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build",

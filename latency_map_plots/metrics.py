@@ -8,7 +8,7 @@ DATA_RATES = [6, 9, 12, 18, 24, 36, 48, 54]
 def extract_avg_power(data):
     avg_power = sum(map(
         lambda row: sum(map(
-                    lambda t: t["tx_power_w"] * t["tx_time"],
+                    lambda t: t["tx_power_w"] * t["tx_duration"],
                     row["transmissions"]
                 )),
         data))

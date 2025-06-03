@@ -7,7 +7,7 @@ from dataclasses import asdict
 import signal
 import sys
 
-BASE = "/home/pietro/Documents/repos/ns3-wifi-sim"
+BASE = "/home/ptrchv/repos/ns3-wifi-sim/"
 
 #PROGRAM = "build/latency-test-v2/ns3-dev-latency-test-v2-debug"
 PROGRAM = "build/latency-test-v2/ns3-dev-latency-test-v2-optimized"
@@ -15,15 +15,12 @@ PROGRAM = "build/latency-test-v2/ns3-dev-latency-test-v2-optimized"
 #CONF_FILE = "latency-test-v2/test_beacons_ap/test_beacons_ap.json"
 #OUT_FOLDER = "latency-test-v2/test_beacons_ap"
 
-CONF_FILE = "latency-test-v2/test_wfcs/wfcs_simulations_01.json"
-OUT_FOLDER = "latency-test-v2/test_wfcs/sim_res"
-
-# CONF_FILE = "latency-test-v2/test_simple_conf/single_sim_conf_list.json"
-# OUT_FOLDER = "latency-test-v2/test_simple_conf/sim_res"
+CONF_FILE = "latency-test-v2/test_etfa_wip_mobility/etfa_wip_moving_sta.json"
+OUT_FOLDER = "latency-test-v2/test_etfa_wip_mobility/sim_res"
 
 OUT_PREFIX = "db"
 
-BATCH_SIZE = 4
+BATCH_SIZE = 9
 
 
 class ProcessBatch:

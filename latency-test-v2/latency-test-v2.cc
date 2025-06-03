@@ -2,6 +2,7 @@
 #include "packet-info.h"
 #include "utils.h"
 #include "sta-logger.h"
+#include "arguments.h"
 
 #include <iostream>
 #include <fstream>
@@ -34,6 +35,7 @@
 #include "ns3/wifi-mpdu.h"
 #include "ns3/wifi-net-device.h"
 #include "my-udp-client-helper.h"
+#include "ns3/waypoint-mobility-model.h"
 
 #include <chrono>
 #include <nlohmann/json.hpp>
@@ -49,7 +51,7 @@ NS_LOG_COMPONENT_DEFINE("LatencyTestV2");
 int main(int argc, char** argv) {
 
     LogComponentEnable("LatencyTestV2", LOG_LEVEL_DEBUG);
-    LogComponentEnable("StaLogger", LOG_LEVEL_DEBUG);    
+    LogComponentEnable("StaLogger", LOG_LEVEL_DEBUG);
 
     constexpr uint32_t port = 9;
     std::string outFilePath = "db0.json";
@@ -87,9 +89,21 @@ int main(int argc, char** argv) {
         arg_file >> args;
     }
 
+
+    NS_LOG_DEBUG(args.staNode.mobility.mobilityModel);
+    NS_LOG_DEBUG(args.staNode.mobility.startPos.x);
+    NS_LOG_DEBUG(args.staNode.mobility.endPos.x);
+    NS_LOG_DEBUG(args.staNode.mobility.timeOffset);
+    NS_LOG_DEBUG(args.staNode.mobility.tripTime);
+    NS_LOG_DEBUG(args.staNode.mobility.repetitions);
+    NS_LOG_DEBUG(args.runNumber);
+
+
     // Set seed
     RngSeedManager::SetSeed(1);
-    SeedManager::SetSeed(1);
+    RngSeedManager::SetRun(args.runNumber);
+
+    //SeedManager::SetSeed(1);
     //Packet::EnablePrinting();
 
     // Create node containers for AP, STA and interferers
@@ -117,7 +131,6 @@ int main(int argc, char** argv) {
         spectrumPhyHelper.SetChannel(spectrumChannel);
         spectrumPhyHelper.Set("ChannelSettings", StringValue(phyConfig.channelSettings));
         spectrumChannel->AssignStreams(100); //allow the deterministic configuration of random variable stream numbers
-
         spectrumPhys.push_back(spectrumPhyHelper);
     }
 
@@ -210,24 +223,44 @@ int main(int argc, char** argv) {
     for (const auto &apConfig : args.apNodes)
     {
         positionAllocator->Add(Vector(apConfig.position.x, apConfig.position.y, apConfig.position.z));
-    }
-
-    positionAllocator->Add(Vector(args.staNode.position.x, args.staNode.position.y, args.staNode.position.z));
+    }    
 
     for (const auto &interfererConf : args.interfererNodes)
     {
         positionAllocator->Add(Vector(interfererConf.position.x, interfererConf.position.y, interfererConf.position.z));
     }
 
+    positionAllocator->Add(Vector(args.staNode.position.x, args.staNode.position.y, args.staNode.position.z));
+
     // Configure mobility model (with type and vector of positions)
-    MobilityHelper mobility;
+    MobilityHelper mobility;  
     mobility.SetPositionAllocator(positionAllocator);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 
     // Install mobility model on nodes (probably goes through the vector of positions)
     mobility.Install(wifiApNodes);
-    mobility.Install(wifiStaNode);
     mobility.Install(wifiInterfererNodes);
+    mobility.SetMobilityModel(args.staNode.mobility.mobilityModel);    
+    mobility.Install(wifiStaNode);
+    Ptr<MobilityModel> staMobilityModel = wifiStaNode.Get(0)->GetObject<MobilityModel>();
+
+    if (args.staNode.mobility.mobilityModel == "ns3::WaypointMobilityModel") {
+        Ptr<WaypointMobilityModel> staWaypointMobilityModel = DynamicCast<WaypointMobilityModel>(staMobilityModel);
+        if (args.staNode.mobility.timeOffset> 0) {
+            staWaypointMobilityModel->AddWaypoint(Waypoint(Seconds(0),Vector(args.staNode.mobility.startPos.x, args.staNode.mobility.startPos.y, args.staNode.mobility.startPos.z)));
+        }
+        for (uint32_t i = 0; i < args.staNode.mobility.repetitions*2; ++i) {
+            Vector waypointsCoords = i % 2 == 0 ?
+                Vector(args.staNode.mobility.startPos.x, args.staNode.mobility.startPos.y, args.staNode.mobility.startPos.z):
+                Vector(args.staNode.mobility.endPos.x, args.staNode.mobility.endPos.y, args.staNode.mobility.endPos.z);                
+            staWaypointMobilityModel->AddWaypoint(
+                Waypoint(
+                    Seconds(args.staNode.mobility.tripTime * i + args.staNode.mobility.timeOffset),
+                    waypointsCoords
+                )
+            );
+        }
+    }
 
     // Install internet stack
     InternetStackHelper internetStack;
@@ -282,13 +315,14 @@ int main(int argc, char** argv) {
     interfererApps.Start(Seconds(1.0));
     interfererApps.Stop(Seconds(args.simulationTime + 1));
 
-
     // create STA logger
-    STALogger sta_logger(outFilePath, args, DynamicCast<WifiNetDevice>(staDevice.Get(0)));
+    std::stringstream ss;
+    ss << args;
+    STALogger sta_logger(outFilePath, ss.str(), DynamicCast<WifiNetDevice>(staDevice.Get(0)), staMobilityModel);
     sta_logger.logHeader();
 
     // Tracing for sent packets
-    std::stringstream ss;
+    ss.str(std::string());
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxPsduBegin";
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::sendingMpduCallback,  &sta_logger));
 
