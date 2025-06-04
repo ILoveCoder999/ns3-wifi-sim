@@ -3,6 +3,9 @@ import itertools
 import numpy as np
 import copy
 
+class NoDataException(Exception):
+    pass
+
 DATA_RATES = [6, 9, 12, 18, 24, 36, 48, 54]
 
 def extract_avg_power(data):
@@ -74,7 +77,7 @@ def extract_rate_succ_dist(data):
         )
     )
     rates_succ = [rates_succ.count(rate*1e6) for rate in DATA_RATES]
-    return [rs / r * 100 for rs, r in zip(rates_succ, rates)]
+    return [(rs / r * 100 if r > 0 else None) for rs, r in zip(rates_succ, rates)]
 
 def extract_rate_latency_dist(data, exclude_final = True):
     latency_data = list(
@@ -94,7 +97,10 @@ def extract_rate_latency_dist(data, exclude_final = True):
 
 
 def remove_dropped(data):
-    return [row for row in data if row["acked"] == True]
+    data = [row for row in data if row["acked"] == True]
+    if not data:
+        raise NoDataException
+    return data
 
 
 # metrics for maps

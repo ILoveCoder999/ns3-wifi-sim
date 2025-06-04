@@ -7,10 +7,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import ast
 
-from metrics import METRICS
+from metrics import METRICS, NoDataException
 
 
-EXP_DIR = Path("./wfcs_sim").absolute()  # folder with experiement results
+EXP_DIR = Path("./etfa_wip_constant_sim").absolute()  # folder with experiement results
 OUT_DIR = EXP_DIR.parent.absolute() / (EXP_DIR.name + "_maps")    # output folder
 
 EXP_FILE_SUFFIX = ".dat"
@@ -111,7 +111,10 @@ def export_map_1d(conf_file, exp_dir, map_dir):
             new_row["x_pos"] = int(pos["x"])
 
             for m in METRICS:
-                new_row[m] = METRICS[m]["fnc"](exp_data) if len(exp_data) > 0 else None
+                try:
+                    new_row[m] = METRICS[m]["fnc"](exp_data) if len(exp_data) > 0 else None
+                except NoDataException:
+                    new_row[m] = None
             df_metrics.loc[len(df_metrics)] = new_row
 
         df_metrics.to_csv(map_dir / "map_{:02}.csv".format(idx), index=False)

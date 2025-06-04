@@ -1,46 +1,92 @@
-import json
+# %%
 import pandas as pd
+import matplotlib.pyplot as plt
 from pathlib import Path
 from metrics import METRICS
 
-POS_LIST = [i for i in range(1, 51)]
+# %%
+OUT_FOLDER = Path("/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps/plots")
+OUT_FOLDER.mkdir(parents=True, exist_ok=True)
 
-def export_mobility_map_1d(db_file, map_dir):
-    with open(db_file) as f:
-        exp_data = json.load(f)
+OUT_FORMAT = "png" # ".pdf"
 
-    map_dir.mkdir(parents=True, exist_ok=True)    
+PLOT_METRICS = [
+    "latency_avg",
+    "latency_min",
+    "latency_10_perc",
+    "latency_99_perc",
+    "latency_99.9_perc",
+    "transmission_num_avg",
+    "transmission_num_max_no_dropped",
+    "%_dropped"
+]
 
-    exp_data = exp_data[1:-1]
-    exp_data = [{"x_pos": round(row["transmissions"][0]["position"][0]), **row} for row in exp_data]    
-    pos_data = {pos: [] for pos in POS_LIST}   
-    
-    for row in exp_data:
-        if row["x_pos"] in pos_data:
-            pos_data[row["x_pos"]].append(row)
+EXP_INFO = {
+    "optimal" : {
+        "folder": "/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps/constant",
+        "files" : {
+            "no_int": "map_00.csv",
+            "hidden": "map_01.csv",
+            "visible": "map_02.csv"
+        }
+    },
+    "static" : {
+        "folder": "/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/wfcs_sim_maps/maps",
+        "files" : {
+            "no_int": "map_00.csv",
+            "hidden": "map_01.csv",
+            "visible": "map_03.csv"
+        }
+    },
+    "mobility" : {
+        "folder": "/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps/mobility",
+        "files" : {
+            "no_int": {
+                "fast": "map_00.csv",
+                "medium": "map_01.csv",
+                "slow": "map_02.csv",
+            },
+            "hidden": {
+                "fast": "map_03.csv",
+                "medium": "map_04.csv",
+                "slow": "map_05.csv",
+            },
+            "visible": {
+                "fast": "map_06.csv",
+                "medium": "map_07.csv",
+                "slow": "map_08.csv",
+            }
+        }
+    }
+}
 
-    df_metrics = pd.DataFrame(columns = ["x_pos"] + [m for m in METRICS])
 
-    for x_pos, data in pos_data.items():
-        new_row = {c: None for c in df_metrics.columns}
-        new_row["x_pos"] = x_pos
+# %%
+for conf_interf in ["no_int", "hidden", "visible"]:
+    for metric in PLOT_METRICS:
+        fig, ax = plt.subplots()
+        for exp in  EXP_INFO:
+            folder = EXP_INFO[exp]["folder"]
+            if exp != "mobility":
+                fname = Path(EXP_INFO[exp]["folder"]) / EXP_INFO[exp]["files"][conf_interf]
+                df = pd.read_csv(fname)
+                df = df[df["x_pos"] > 0]
+                p1, = ax.plot(df["x_pos"], df[metric]*METRICS[metric]["scaling"], label = exp)
+            else:
+                for sta_speed in ["fast", "slow", "medium"]:
+                    fname = Path(EXP_INFO[exp]["folder"]) / EXP_INFO[exp]["files"][conf_interf][sta_speed]
+                    df = pd.read_csv(fname)
+                    df = df[df["x_pos"] > 0]
+                    p1, = ax.plot(df["x_pos"], df[metric]*METRICS[metric]["scaling"], label = "{}_{}".format(exp, sta_speed))
+        ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
+        ax.set_ylabel(METRICS[metric]["label"], fontsize=16)#, rotation=-90, va="bottom")
+        ax.tick_params(axis='both', which='major', labelsize = 14)
+        ax.legend(prop={'size': 12})
+        plt.tight_layout()
+        fig.savefig(OUT_FOLDER / "{}_{}.{}".format(conf_interf, metric, OUT_FORMAT))
 
-        for m in METRICS:
-            new_row[m] = METRICS[m]["fnc"](data) if len(data) > 0 else None
-        df_metrics.loc[len(df_metrics)] = new_row
-
-    df_metrics.to_csv(map_dir / "map_{:02}.csv".format(0), index=False)
 
 
 
-def main():
-    db_file = Path("/home/ptrchv/repos/ns3-wifi-sim/latency-test-v2/test_etfa_wip_mobility/sim_res_test/db_7.json")
-    map_dir = Path("/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps")
-    export_mobility_map_1d(db_file, map_dir)
 
-    
-
-
-
-if __name__ == "__main__":
-    main()
+# %%
