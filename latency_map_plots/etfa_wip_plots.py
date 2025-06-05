@@ -73,7 +73,7 @@ for conf_interf in ["no_int", "hidden", "visible"]:
                 df = df[df["x_pos"] > 0]
                 p1, = ax.plot(df["x_pos"], df[metric]*METRICS[metric]["scaling"], label = exp)
             else:
-                for sta_speed in ["fast", "slow", "medium"]:
+                for sta_speed in ["slow", "medium", "fast"]:
                     fname = Path(EXP_INFO[exp]["folder"]) / EXP_INFO[exp]["files"][conf_interf][sta_speed]
                     df = pd.read_csv(fname)
                     df = df[df["x_pos"] > 0]
