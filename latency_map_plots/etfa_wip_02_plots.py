@@ -3,12 +3,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 from metrics import METRICS
+import seaborn as sns
+
+# %%
+plt.style.use('seaborn-v0_8-paper')
+sns.set_theme(style="whitegrid")
 
 # %%
 OUT_FOLDER = Path("/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps/plots")
 OUT_FOLDER.mkdir(parents=True, exist_ok=True)
 
-OUT_FORMAT = "png" # ".pdf"
+OUT_FORMAT = "pdf" #"png"
 
 PLOT_METRICS = [
     "latency_avg",
@@ -84,9 +89,7 @@ for conf_interf in ["no_int", "hidden", "visible"]:
         ax.legend(prop={'size': 12})
         plt.tight_layout()
         fig.savefig(OUT_FOLDER / "{}_{}.{}".format(conf_interf, metric, OUT_FORMAT))
-
-
-
+        plt.close(fig)
 
 
 # %%
