@@ -59,8 +59,8 @@ struct HandoverConfig {
     uint32_t PAYLOAD_SIZE = 22;
     double PACKET_INTERVAL = 0.5;
     std::string STA_LOG_PATH = "handover_sta_log.json";
-    std::string ASSOC_LOG_PATH = "handover_assoc_log.dat";
-    //bool inlineConfig = false;
+    std::string ASSOC_LOG_PATH = "handover_assoc_log.json";
+    // bool inlineConfig = false;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&courseChangeCallback));
 
     // Assoclogger
-    AssocLogger assoc_logger(sim_config.ASSOC_LOG_PATH, "log test",  staMobilityModel);
+    AssocLogger assoc_logger(sim_config.ASSOC_LOG_PATH, "{\"header\": \"ADD PARAMETERS\"}",  staMobilityModel);
     assoc_logger.logHeader();
     
     // Tracing new association
@@ -285,7 +285,7 @@ int main(int argc, char** argv) {
     }
 
     // Populate Arp Cache and routing tables
-    // PopulateArpCache();
+    PopulateArpCache();
     // Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
     // Start simulation

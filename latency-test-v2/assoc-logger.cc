@@ -1,5 +1,6 @@
 #include "assoc-logger.h"
 #include "ns3/simulator.h"
+#include "assoc-info.h"
 
 
 NS_LOG_COMPONENT_DEFINE("AssocLogger");
@@ -12,43 +13,58 @@ AssocLogger::AssocLogger(std::string out_file_path, std::string header, Ptr<Mobi
 
 void AssocLogger::logHeader()
 {
-    //_output_file << "[" << std::endl << _header << std::endl;
+    _output_file << "[" << std::endl << _header;
 }
 
 void AssocLogger::logFooter()
 {
-    //_output_file << "]" << std::endl;
+    _output_file << std::endl << "]";
 }
 
 void AssocLogger::assocCallback(Mac48Address value)
 {
-    _output_file << _currentInfo() << ", Association, " << value << std::endl;
+    AssocInfo ai = {
+        AssocInfoType::assoc,
+        Simulator::Now(),
+        _currentPosition(),
+        value        
+    };
+    _output_file << "," << std::endl << json(ai);
 }
 
 void AssocLogger::deAssocCallback(Mac48Address value)
 {
-    _output_file << _currentInfo() << ", De-Association, " << value << std::endl;
+    AssocInfo ai = {
+        AssocInfoType::deassoc,
+        Simulator::Now(),
+        _currentPosition(),
+        value        
+    };
+    _output_file << "," << std::endl << json(ai);
 }
 
 void AssocLogger::beaconArrivalCallback(Time t)
-{
-    _output_file << _currentInfo(t) << ", Beacon arrived" << std::endl;
+{   
+    BeaconInfo bi {
+        BeaconInfoType::arrival,
+        t,
+        _currentPosition()
+    };
+    _output_file << "," << std::endl << json(bi);
 }
 
 void AssocLogger::receivedBeaconInfoCallback(StaWifiMac::ApInfo apInfo)
 {
-    _output_file << _currentInfo() << ", Beacon info, " << apInfo << std::endl;
-}
+    BeaconInfo bi {
+        BeaconInfoType::info,
+        Simulator::Now(),
+        _currentPosition(),
+        apInfo
+    };
+    _output_file << "," << std::endl << json(bi);
+};
 
-std::string AssocLogger::_currentInfo()
-{
-    return _currentInfo(Simulator::Now());
-}
-
-std::string  AssocLogger::_currentInfo(Time t) {
-    std::stringstream ss;
+inline std::tuple<double, double, double> AssocLogger::_currentPosition(){
     Vector position = _mobility->GetPosition();
-    ss << t.ToInteger(ns3::Time::Unit::NS) << ", " << "(" << position.x << ", " <<  position.y << ", " << position.z << ")";
-    return ss.str();
+    return std::make_tuple(position.x, position.y, position.z);
 }
-

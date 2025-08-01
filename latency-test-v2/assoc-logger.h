@@ -26,13 +26,10 @@ class AssocLogger
         void assocCallback(Mac48Address value);
         void deAssocCallback(Mac48Address value);
         void beaconArrivalCallback(Time t);
-        void receivedBeaconInfoCallback(StaWifiMac::ApInfo apInfo);
-        
-        
+        void receivedBeaconInfoCallback(StaWifiMac::ApInfo apInfo);        
     
     protected:
-        std::string _currentInfo(void);
-        std::string _currentInfo(Time t);
+        std::tuple<double, double, double> _currentPosition();
 
         std::ofstream _output_file;
         std::string _header;       
