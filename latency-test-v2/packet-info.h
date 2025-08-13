@@ -38,6 +38,7 @@ struct PacketInfo
     ns3::Time latency;
     std::vector<TransmissionInfo> transmissions;
     std::shared_ptr<TransmissionInfo> current_tx;
+    std::string addr_1 = "";
 };
 
 inline void to_json(json& j, const PacketInfo& p)
@@ -46,7 +47,8 @@ inline void to_json(json& j, const PacketInfo& p)
             {"seq", p.seq},
             {"acked", p.acked},
             {"latency", p.latency.ToInteger(ns3::Time::Unit::NS)},
-            {"transmissions", p.transmissions}
+            {"transmissions", p.transmissions},
+            {"addr_1", p.addr_1}
     };
 }
 

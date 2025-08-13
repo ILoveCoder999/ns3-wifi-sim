@@ -72,6 +72,9 @@ void STALogger::sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVec
                         NS_FATAL_ERROR("Transmission still pending");
                     }
                 }
+                std::ostringstream os;
+                os << mpdu.GetHeader().GetAddr1();
+                info.addr_1 = os.str();
                 info.current_tx = std::make_shared<TransmissionInfo>();
                 info.current_tx->rate = txVector.GetMode().GetDataRate(txVector);
                 info.current_tx->tx_power_w = txPowerW;

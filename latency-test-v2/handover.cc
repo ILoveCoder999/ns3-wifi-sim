@@ -51,20 +51,34 @@ using json = nlohmann::json;
 using namespace ns3;
 NS_LOG_COMPONENT_DEFINE("handover");
 
+struct Position
+{
+  double x = 0.0;
+  double y = 0.0;
+  double z = 0.0;
+};
+
 struct HandoverConfig {
-    bool ENABLE_PCAP = true;
+    bool ENABLE_PCAP = false;
     bool ANIMATION = false;
-    double SIM_TIME = 600;
+    double SIM_TIME = 60000;
     uint32_t PORT = 9;
     uint32_t PAYLOAD_SIZE = 22;
     double PACKET_INTERVAL = 0.5;
     std::string STA_LOG_PATH = "handover_sta_log.json";
     std::string ASSOC_LOG_PATH = "handover_assoc_log.json";
     // bool inlineConfig = false;
+
+    Position START_POS = {0, 0, 0};
+    Position END_POS = {150, 0, 0};
+    double TRIP_TIME = 300;
+    uint32_t REPETITIONS = 100;
 };
 
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Position, x, y, z);
+
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    HandoverConfig, ENABLE_PCAP, ANIMATION, SIM_TIME, PORT, PAYLOAD_SIZE, PACKET_INTERVAL, STA_LOG_PATH, ASSOC_LOG_PATH);
+    HandoverConfig, ENABLE_PCAP, ANIMATION, SIM_TIME, PORT, PAYLOAD_SIZE, PACKET_INTERVAL, STA_LOG_PATH, ASSOC_LOG_PATH, START_POS, END_POS, TRIP_TIME, REPETITIONS);
 
 int pos_counter = 0;
 void courseChangeCallback(Ptr< const MobilityModel > model) {
@@ -209,9 +223,14 @@ int main(int argc, char** argv) {
     mobility.SetMobilityModel("ns3::WaypointMobilityModel");
     mobility.Install(wifiStaNode);
     Ptr<WaypointMobilityModel> staMobilityModel = DynamicCast<WaypointMobilityModel>(wifiStaNode.Get(0)->GetObject<MobilityModel>());
-    staMobilityModel->AddWaypoint(Waypoint(Seconds(0),Vector(0, 0, 0)));
-    staMobilityModel->AddWaypoint(Waypoint(Seconds(300), Vector(150, 0, 0)));
-    staMobilityModel->AddWaypoint(Waypoint(Seconds(600), Vector(0, 0, 0)));
+    staMobilityModel->AddWaypoint(Waypoint(Seconds(0), Vector(sim_config.START_POS.x, sim_config.START_POS.y, sim_config.START_POS.z)));
+    for (uint32_t i = 0; i < sim_config.REPETITIONS; ++i) {
+        staMobilityModel->AddWaypoint(Waypoint(Seconds(sim_config.TRIP_TIME * (i*2 + 1)), Vector(sim_config.END_POS.x, sim_config.END_POS.y, sim_config.END_POS.z)));
+        staMobilityModel->AddWaypoint(Waypoint(Seconds(sim_config.TRIP_TIME * (i*2 + 2)), Vector(sim_config.START_POS.x, sim_config.START_POS.y, sim_config.START_POS.z)));
+    }
+    // staMobilityModel->AddWaypoint(Waypoint(Seconds(0),Vector(0, 0, 0)));
+    // staMobilityModel->AddWaypoint(Waypoint(Seconds(300), Vector(150, 0, 0)));
+    // staMobilityModel->AddWaypoint(Waypoint(Seconds(600), Vector(0, 0, 0)));
     
     // Create STA logger
     std::stringstream ss;
