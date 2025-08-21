@@ -184,3 +184,5 @@ python -m submit_jobs BATCH_FILE BATCH_SIZE OUT_DIR # Use -1 for BATCH_SIZE to r
 - latency-test-2.cc vs latency_test.cc ??? (latency-test-v2/latency-test.cc is the one uses on the server!!!)
 - bug perchè l'interferente non viene messo ad altezza zero, ma ad altezza y
 
+## Search stuff
+- grep -rnw './src/wifi' -e 'NotifyChannelSwitching'

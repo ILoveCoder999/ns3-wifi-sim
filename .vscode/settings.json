@@ -84,6 +84,7 @@
         "__tree": "cpp",
         "__functional_base": "cpp",
         "__memory": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "__locale": "cpp"
     }
 }

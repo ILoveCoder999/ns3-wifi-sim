@@ -9,9 +9,19 @@ build_exec (
 
 build_exec (
     EXECNAME handover
-    SOURCE_FILES interferer-application.cc interferer-application-helper.cc my-udp-client.cc my-udp-client-helper.cc utils.cc str-utils.cc sta-logger.cc assoc-logger.cc handover.cc 
+    SOURCE_FILES interferer-application.cc interferer-application-helper.cc my-udp-client.cc my-udp-client-helper.cc utils.cc str-utils.cc sta-logger.cc assoc-logger.cc roaming-manager.cc handover.cc
     LIBRARIES_TO_LINK ${ns3-libs} nlohmann_json::nlohmann_json
     # use "${ns3-libs}" "${ns3-contrib-libs}" in case you want to link to all
     # enabled modules
     EXECUTABLE_DIRECTORY_PATH ${CMAKE_OUTPUT_DIRECTORY}/handover
+)
+
+
+build_exec (
+    EXECNAME reassociation_test
+    SOURCE_FILES interferer-application.cc interferer-application-helper.cc my-udp-client.cc my-udp-client-helper.cc utils.cc str-utils.cc sta-logger.cc assoc-logger.cc reassociation_test.cc
+    LIBRARIES_TO_LINK ${ns3-libs} nlohmann_json::nlohmann_json
+    # use "${ns3-libs}" "${ns3-contrib-libs}" in case you want to link to all
+    # enabled modules
+    EXECUTABLE_DIRECTORY_PATH ${CMAKE_OUTPUT_DIRECTORY}/reassociation_test
 )

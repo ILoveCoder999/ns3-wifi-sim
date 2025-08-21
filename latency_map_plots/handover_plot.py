@@ -3,26 +3,33 @@ import json
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from pathlib import Path
+
+# %%
+BASE_DIR = "handover_sim"
+EXP_DIR = "2ch_noint"
+IMG_FORMAT = "png"
+
+# %%
+plot_dir = Path(BASE_DIR) / "plots" / EXP_DIR
+plot_dir.mkdir(parents=True, exist_ok=True)
 
 # %%
 class NoDataException(Exception):
     pass
 
-def remove_dropped(data):
-    print(data)
-
 # %%
-with open("handover_sim/handover_assoc_log.json") as f:
+with open("{}/data/{}/handover_assoc_log.json".format(BASE_DIR, EXP_DIR)) as f:
     assoc_log = json.load(f)
 
-with open("handover_sim/handover_sta_log.json") as f:
+with open("{}/data/{}/handover_sta_log.json".format(BASE_DIR, EXP_DIR)) as f:
     sta_log = json.load(f)
 
 sta_log = sta_log[1:-1]
 assoc_log = assoc_log[1:]
 
 # %%
-POS_ROUNDING_SEP = 1
+POS_ROUNDING_SEP = 0
 POS_ROUNDING_TOT = 0
 POS_ROUNDING_BC = 0
 
@@ -31,7 +38,7 @@ rows_sta = [
     {
         "tx_time": r["transmissions"][0]["tx_time"], 
         "pos": r["transmissions"][0]["position"][0],
-        "latency": r["latency"],
+        "latency": r["latency"]/1000,
         "acked": r["acked"],
         "num_trans": len(r["transmissions"]),
         "ap": "ap1" if r["addr_1"] == "00:00:00:00:00:02" else "ap2"
@@ -116,38 +123,73 @@ def plot_assoc_deassoc(ax):
 
 # %%
 fig, ax = plt.subplots()
-ax.plot(df_g1["pos"], df_g1["latency_mean"])
-ax.plot(df_g2["pos"], df_g2["latency_mean"])
+ax.plot(df_g1["pos"], df_g1["latency_mean"], label = "AP1 - Avg. latency")
+ax.plot(df_g2["pos"], df_g2["latency_mean"], label = "AP2 - Avg. latency")
 #ax.plot(df_tot["pos"], df_tot["latency_mean"])
 plot_assoc_deassoc(ax)
 
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_ylabel("Latency ($\mu$s)", fontsize=16)#, rotation=-90, va="bottom")
+ax.tick_params(axis='both', which='major', labelsize = 14)
+ax.legend(prop={'size': 12})
+plt.tight_layout()
+fig.savefig(plot_dir / "latency_avg.{}".format(IMG_FORMAT))
+
 # %%
 fig, ax = plt.subplots()
-ax.plot(df_g1["pos"], df_g1["latency_99"])
-ax.plot(df_g2["pos"], df_g2["latency_99"])
+ax.plot(df_g1["pos"], df_g1["latency_99"], label = "AP1 - 99 perc. latency")
+ax.plot(df_g2["pos"], df_g2["latency_99"], label = "AP2 - 99 perc. latency")
 #ax.plot(df_tot["pos"], df_tot["latency_99"])
 plot_assoc_deassoc(ax)
 
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_ylabel("Latency ($\mu$s)", fontsize=16)#, rotation=-90, va="bottom")
+ax.tick_params(axis='both', which='major', labelsize = 14)
+ax.legend(prop={'size': 12})
+plt.tight_layout()
+fig.savefig(plot_dir / "latency_99perc.{}".format(IMG_FORMAT))
+
 # %%
 fig, ax = plt.subplots()
-ax.plot(df_g1["pos"], df_g1["latency_99_9"])
-ax.plot(df_g2["pos"], df_g2["latency_99_9"])
+ax.plot(df_g1["pos"], df_g1["latency_99_9"], label ="AP1 - 99.9 perc. latency")
+ax.plot(df_g2["pos"], df_g2["latency_99_9"], label ="AP2 - 99.9 perc. latency")
 #ax.plot(df_tot["pos"], df_tot["latency_99_9"])
 plot_assoc_deassoc(ax)
 
-# %%
-fig, ax = plt.subplots()
-ax.plot(df_g1["pos"], df_g1["trans_num_mean"])
-ax.plot(df_g2["pos"], df_g2["trans_num_mean"])
-#ax.plot(df_tot["pos"], df_tot["trans_num_mean"])
-plot_assoc_deassoc(ax)
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_ylabel("Latency ($\mu$s)", fontsize=16)#, rotation=-90, va="bottom")
+ax.tick_params(axis='both', which='major', labelsize = 14)
+ax.legend(prop={'size': 12})
+plt.tight_layout()
+fig.savefig(plot_dir / "latency_99.9perc.{}".format(IMG_FORMAT))
 
 # %%
 fig, ax = plt.subplots()
-ax.plot(df_g1["pos"], df_g1["drop_perc"])
-ax.plot(df_g2["pos"], df_g2["drop_perc"])
+ax.plot(df_g1["pos"], df_g1["trans_num_mean"], label = "AP1 - Avg. attempts")
+ax.plot(df_g2["pos"], df_g2["trans_num_mean"], label = "AP2 - Avg. attempts")
+#ax.plot(df_tot["pos"], df_tot["trans_num_mean"])
+plot_assoc_deassoc(ax)
+
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_ylabel("# Transmissions", fontsize=16)#, rotation=-90, va="bottom")
+ax.tick_params(axis='both', which='major', labelsize = 14)
+ax.legend(prop={'size': 12})
+plt.tight_layout()
+fig.savefig(plot_dir / "attempts_avg.{}".format(IMG_FORMAT))
+
+# %%
+fig, ax = plt.subplots()
+ax.plot(df_g1["pos"], df_g1["drop_perc"], label="AP1 - % dropped")
+ax.plot(df_g2["pos"], df_g2["drop_perc"], label="AP2 - % dropped")
 #ax.plot(df_tot["pos"], df_tot["drop_perc"])
 plot_assoc_deassoc(ax)
+
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_ylabel("Dropped (%)", fontsize=16)#, rotation=-90, va="bottom")
+ax.tick_params(axis='both', which='major', labelsize = 14)
+ax.legend(prop={'size': 12})
+plt.tight_layout()
+fig.savefig(plot_dir / "dropped_%.{}".format(IMG_FORMAT))
 
 # %%
 df_bc["pos"] = df_bc["pos"].round(POS_ROUNDING_BC)
@@ -158,13 +200,19 @@ print(df_bc)
 # %%
 fig, ax = plt.subplots()
 df_bc_1 = df_bc[df_bc["ap"] == "ap1"]
-ax.semilogy(df_bc_1["pos"], df_bc_1["snr"])
+ax.semilogy(df_bc_1["pos"], df_bc_1["snr"], label = "AP1 - SNR")
 
 df_bc_2 = df_bc[df_bc["ap"] == "ap2"]
-ax.semilogy(df_bc_2["pos"], df_bc_2["snr"])
+ax.semilogy(df_bc_2["pos"], df_bc_2["snr"], label = "AP2 - SNR")
 
+ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
+ax.set_ylabel("SNR", fontsize=16)#, rotation=-90, va="bottom")
+ax.tick_params(axis='both', which='major', labelsize = 14)
+ax.legend(prop={'size': 12})
+plt.tight_layout()
 
-# %%
+fig.savefig(plot_dir / "snr.{}".format(IMG_FORMAT))
+
 # %%
 # X make spatial aggregation precision selectable (round digits)
 # X make one dataset with all metrics combined
@@ -173,3 +221,8 @@ ax.semilogy(df_bc_2["pos"], df_bc_2["snr"])
 # - save figures
 # - simulation for article methods (how?)
 # - decide interferent positions
+
+# - test association swith by just changing STA channel with timer
+# - define new association manager
+
+# %%

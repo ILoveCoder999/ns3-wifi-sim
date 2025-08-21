@@ -4,7 +4,6 @@
 #include "sta-logger.h"
 #include "my-udp-client-helper.h"
 #include "assoc-logger.h"
-#include "roaming-manager.h"
 
 #include <iostream>
 #include <fstream>
@@ -50,56 +49,47 @@
 using json = nlohmann::json;
 
 using namespace ns3;
-NS_LOG_COMPONENT_DEFINE("handover");
+NS_LOG_COMPONENT_DEFINE("reassociation_test");
 
-struct Position
-{
-  double x = 0.0;
-  double y = 0.0;
-  double z = 0.0;
-};
 
 struct HandoverConfig {
     bool ENABLE_PCAP = false;
-    bool DOUBLE_CHANNEL = true;
     bool ANIMATION = false;
-    double SIM_TIME = 60000;
+    double SIM_TIME = 100;
     uint32_t PORT = 9;
     uint32_t PAYLOAD_SIZE = 22;
     double PACKET_INTERVAL = 0.5;
     std::string STA_LOG_PATH = "handover_sta_log.json";
     std::string ASSOC_LOG_PATH = "handover_assoc_log.json";
     // bool inlineConfig = false;
-
-    Position START_POS = {0, 0, 0};
-    Position END_POS = {150, 0, 0};
-    double TRIP_TIME = 300;
-    uint32_t REPETITIONS = 100;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Position, x, y, z);
-
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    HandoverConfig, ENABLE_PCAP, DOUBLE_CHANNEL, ANIMATION, SIM_TIME, PORT, PAYLOAD_SIZE, PACKET_INTERVAL, STA_LOG_PATH, ASSOC_LOG_PATH, START_POS, END_POS, TRIP_TIME, REPETITIONS);
+    HandoverConfig, ENABLE_PCAP, ANIMATION, SIM_TIME, PORT, PAYLOAD_SIZE, PACKET_INTERVAL, STA_LOG_PATH, ASSOC_LOG_PATH);
 
-int pos_counter = 0;
-void courseChangeCallback(Ptr< const MobilityModel > model) {
-    NS_LOG_FUNCTION(pos_counter);
-    pos_counter+=1;
-}
 
-void timerCallback(Timer* timer, Ptr<WaypointMobilityModel> staMobility) {
+uint16_t STA_CHANNEL = 44;
+
+void timerCallback(Timer* timer, Ptr<MobilityModel> staMobility, Ptr<WifiPhy> phy) {
     NS_LOG_FUNCTION(Simulator::Now().GetSeconds());
     NS_LOG_FUNCTION(staMobility->GetPosition());
+
+    if (STA_CHANNEL == 44) {
+        phy->SetAttribute("ChannelSettings", StringValue("{40,20,BAND_5GHZ,0}"));
+        STA_CHANNEL = 40;
+    }
+    else {
+        phy->SetAttribute("ChannelSettings", StringValue("{44,20,BAND_5GHZ,0}"));
+        STA_CHANNEL = 44;
+    }
     timer->Schedule(Seconds(1));
 }
 
-int main(int argc, char** argv) {
-    
+
+int main(int argc, char** argv) {    
     HandoverConfig sim_config;
 
-    LogComponentEnable("handover", LOG_LEVEL_DEBUG);
-    //LogComponentEnable("RoamingManager", LOG_LEVEL_DEBUG);
+    LogComponentEnable("reassociation_test", LOG_LEVEL_DEBUG);
 
     // Set seed
     RngSeedManager::SetSeed(1);
@@ -150,9 +140,8 @@ int main(int argc, char** argv) {
 
     wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
     apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(0)));
-    if (sim_config.DOUBLE_CHANNEL) {
-        spectrumPhyHelper.Set("ChannelSettings", StringValue("{40,20,BAND_5GHZ,0}"));
-    }
+
+    spectrumPhyHelper.Set("ChannelSettings", StringValue("{40,20,BAND_5GHZ,0}"));
     apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(1)));
 
     // Configure CSMA
@@ -218,26 +207,17 @@ int main(int argc, char** argv) {
     Ptr<ListPositionAllocator> positionAllocator = CreateObject<ListPositionAllocator>();
     positionAllocator->Add(Vector(50, 0, 0));
     positionAllocator->Add(Vector(100, 0, 0));
+    positionAllocator->Add(Vector(60, 0, 0));
     
     // Configure and install mobility for APs
     MobilityHelper mobility;
     mobility.SetPositionAllocator(positionAllocator);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(wifiApNodes);
-
-    // Configure and install mobility model for STA
-    mobility.SetMobilityModel("ns3::WaypointMobilityModel");
     mobility.Install(wifiStaNode);
-    Ptr<WaypointMobilityModel> staMobilityModel = DynamicCast<WaypointMobilityModel>(wifiStaNode.Get(0)->GetObject<MobilityModel>());
-    staMobilityModel->AddWaypoint(Waypoint(Seconds(0), Vector(sim_config.START_POS.x, sim_config.START_POS.y, sim_config.START_POS.z)));
-    for (uint32_t i = 0; i < sim_config.REPETITIONS; ++i) {
-        staMobilityModel->AddWaypoint(Waypoint(Seconds(sim_config.TRIP_TIME * (i*2 + 1)), Vector(sim_config.END_POS.x, sim_config.END_POS.y, sim_config.END_POS.z)));
-        staMobilityModel->AddWaypoint(Waypoint(Seconds(sim_config.TRIP_TIME * (i*2 + 2)), Vector(sim_config.START_POS.x, sim_config.START_POS.y, sim_config.START_POS.z)));
-    }
-    // staMobilityModel->AddWaypoint(Waypoint(Seconds(0),Vector(0, 0, 0)));
-    // staMobilityModel->AddWaypoint(Waypoint(Seconds(300), Vector(150, 0, 0)));
-    // staMobilityModel->AddWaypoint(Waypoint(Seconds(600), Vector(0, 0, 0)));
-    
+
+    Ptr<MobilityModel> staMobilityModel = wifiStaNode.Get(0)->GetObject<MobilityModel>();
+
     // Create STA logger
     std::stringstream ss;
     ss << json(sim_config);
@@ -264,11 +244,6 @@ int main(int argc, char** argv) {
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/DroppedMpdu";
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::droppedMpduCallback, &sta_logger));
     
-    // Tracing for course changes
-    ss.str(std::string());
-    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/$ns3::MobilityModel/$ns3::WaypointMobilityModel/CourseChange";
-    Config::ConnectWithoutContext(ss.str(), MakeCallback(&courseChangeCallback));
-
     // Assoclogger
     AssocLogger assoc_logger(sim_config.ASSOC_LOG_PATH, "{\"header\": \"ADD PARAMETERS\"}",  staMobilityModel);
     assoc_logger.logHeader();
@@ -283,10 +258,10 @@ int main(int argc, char** argv) {
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/DeAssoc";
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&AssocLogger::deAssocCallback, &assoc_logger));
 
-    // // Tracing beacon arrival
-    // ss.str(std::string());
-    // ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/BeaconArrival";
-    // Config::ConnectWithoutContext(ss.str(), MakeCallback(&AssocLogger::beaconArrivalCallback, &assoc_logger));
+    // Tracing beacon arrival
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/BeaconArrival";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&AssocLogger::beaconArrivalCallback, &assoc_logger));
 
     // Tracing new beacon info
     ss.str(std::string());
@@ -296,16 +271,8 @@ int main(int argc, char** argv) {
     // Tracing for mobility (polling)
     Timer timer = Timer();
     timer.SetFunction(&timerCallback);
-    timer.SetArguments(&timer, staMobilityModel);
+    timer.SetArguments(&timer, staMobilityModel, DynamicCast<WifiNetDevice>(staDevice.Get(0))->GetPhy());
     timer.Schedule(Seconds(1));
-    
-    // Channel change
-    RoamingManager roaming_manager(DynamicCast<WifiNetDevice>(staDevice.Get(0)), staMobilityModel, std::vector<uint8_t>({44, 40}));
-    if (sim_config.DOUBLE_CHANNEL) {       
-        ss.str(std::string());
-        ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/DeAssoc";
-        Config::ConnectWithoutContext(ss.str(), MakeCallback(&RoamingManager::deAssocCallback, &roaming_manager));
-    }
 
     // Enable pcap on all nodes (physical layer)
     if (sim_config.ENABLE_PCAP)
