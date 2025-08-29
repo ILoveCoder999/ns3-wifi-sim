@@ -7,7 +7,7 @@ from pathlib import Path
 
 # %%
 BASE_DIR = "handover_sim"
-EXP_DIR = "2ch_noint"
+EXP_DIR = "1ch_noint_60_90_high"
 IMG_FORMAT = "png"
 
 # %%
@@ -32,6 +32,8 @@ assoc_log = assoc_log[1:]
 POS_ROUNDING_SEP = 0
 POS_ROUNDING_TOT = 0
 POS_ROUNDING_BC = 0
+
+ASSOC_INTERVAL = 5
 
 # %%
 rows_sta = [
@@ -106,7 +108,8 @@ print(df_g1)
 print(df_g2)
 
 # %%
-df_ass = df_ass.groupby(['msg', "ap"]).agg(pos = ('pos', 'mean')).reset_index()
+df_ass["pos_group"] = df_ass["pos"] // ASSOC_INTERVAL
+df_ass = df_ass.groupby(['msg', "ap", "pos_group"]).agg(pos = ('pos', 'mean')).reset_index()
 a_lines = []
 d_lines = []
 for index, row in df_ass.iterrows():
@@ -218,11 +221,18 @@ fig.savefig(plot_dir / "snr.{}".format(IMG_FORMAT))
 # X make one dataset with all metrics combined
 # X add vertical lines of assoc/deassoc (grouped by type and target AP and averaged)
 # X overlay overall metrics (not good)
-# - save figures
-# - simulation for article methods (how?)
-# - decide interferent positions
+# X save figures
+# X test association swith by just changing STA channel with timer
+# X enable channel roaming
 
-# - test association swith by just changing STA channel with timer
-# - define new association manager
+# - do some tests (distant APs, separate channels etc...)
+#   - for now strange behavior with interferent at x=120 (probably ack interference)
+#   - change simulation details (AP position, packet interval, speed)
+# needed to change interferent packet size (note that and understand exactly why)
+# - add pcap to interferents
+# - sim configuration script
+#   - complete conf data stuctures
+# - add interferers
+# - implement roaming strategies (simulator???)
 
 # %%

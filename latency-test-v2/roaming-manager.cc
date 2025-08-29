@@ -5,24 +5,17 @@
 
 NS_LOG_COMPONENT_DEFINE("RoamingManager");
 
-RoamingManager::RoamingManager(Ptr<WifiNetDevice> staDevice, Ptr<MobilityModel> mobility, std::vector<uint8_t> channel_list):
+RoamingManager::RoamingManager(Ptr<WifiNetDevice> staDevice, Ptr<MobilityModel> mobility, std::vector<std::string> channel_list):
      _staDevice(staDevice), _mobility(mobility), _channel_list(channel_list)
 {
-    Ptr<WifiPhy> phy = _staDevice->GetPhy();
-    uint8_t ch_num = phy->GetChannelNumber();
-    std::vector<uint8_t>::iterator iter = std::find(_channel_list.begin(), _channel_list.end(), ch_num);
+    std::string curr_channel = RoamingManager::extractChannelString(_staDevice);
+    std::vector<std::string>::iterator iter = std::find(_channel_list.begin(), _channel_list.end(), curr_channel);
     size_t index = std::distance(_channel_list.begin(), iter);
     if (index == _channel_list.size()) {
-        _channel_list.insert(_channel_list.begin(), ch_num);
+        _channel_list.insert(_channel_list.begin(), curr_channel);
         index = 0;
     }
     _cur_channel_idx = index;
-    _channel_width = phy->GetChannelWidth();
-    std::stringstream ss;
-    ss << phy->GetPhyBand();
-    _band = ss.str();
-    std::transform(_band.begin(), _band.end(), _band.begin(),::toupper);
-    _primary_20_idx = phy->GetPrimary20Index();
 }
 
 void RoamingManager::assocCallback(Mac48Address value) {}
@@ -34,17 +27,31 @@ void RoamingManager::deAssocCallback(Mac48Address value)
 
 void RoamingManager::receivedBeaconInfoCallback(StaWifiMac::ApInfo apInfo) {}
 
+std::string RoamingManager::extractChannelString(Ptr<WifiNetDevice> staDevice)
+{
+    Ptr<WifiPhy> phy = staDevice->GetPhy();
+    std::string band;
+    std::stringstream ss;
+
+    ss << phy->GetPhyBand();
+    band = ss.str();
+    std::transform(band.begin(), band.end(), band.begin(),::toupper);
+    
+    ss.str(std::string());
+    ss << "{"
+        << std::to_string(phy->GetChannelNumber()) << ","
+        << std::to_string(phy->GetChannelWidth()) << ","
+        << "BAND_" << band
+        << "," << std::to_string(phy->GetPrimary20Index()) << "}";
+    NS_LOG_FUNCTION(ss.str());
+    return ss.str();
+}
+
 inline void RoamingManager::_switch_channel()
 {
-    std::stringstream ss;
     _cur_channel_idx = (_cur_channel_idx + 1) % _channel_list.size();
-    ss << "{"
-        << std::to_string(_channel_list[_cur_channel_idx]) << ", "
-        << std::to_string(_channel_width) << ", "
-        << "BAND_" << _band
-        << ", " << "0" << "}";
-    NS_LOG_FUNCTION(ss.str());
-    _staDevice->GetPhy()->SetAttribute("ChannelSettings", StringValue(ss.str()));
+    _staDevice->GetPhy()->SetAttribute("ChannelSettings", StringValue(_channel_list[_cur_channel_idx]));
+    NS_LOG_FUNCTION(_channel_list[_cur_channel_idx]);
 }
 
 inline std::tuple<double, double, double> RoamingManager::_currentPosition()

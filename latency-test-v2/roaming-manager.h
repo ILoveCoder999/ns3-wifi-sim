@@ -12,13 +12,16 @@ using namespace ns3;
 class RoamingManager
 {
     public:
-        RoamingManager(Ptr<WifiNetDevice> staDevice, Ptr<MobilityModel> mobility, std::vector<uint8_t> channel_list);
+        RoamingManager(Ptr<WifiNetDevice> staDevice, Ptr<MobilityModel> mobility, std::vector<std::string> channel_list);
         ~RoamingManager() {};
 
         /* CALLBACKS*/
         void assocCallback(Mac48Address value);
         void deAssocCallback(Mac48Address value);
         void receivedBeaconInfoCallback(StaWifiMac::ApInfo apInfo);
+
+        /* HELPERS*/
+        static std::string extractChannelString(Ptr<WifiNetDevice> staDevice);
     
     private:
         std::tuple<double, double, double> _currentPosition();
@@ -26,11 +29,8 @@ class RoamingManager
 
         Ptr<WifiNetDevice> _staDevice;
         Ptr<MobilityModel> _mobility;
-        std::vector<uint8_t> _channel_list;
+        std::vector<std::string> _channel_list;
         size_t _cur_channel_idx;
-        std::string _band;
-        uint16_t _channel_width;
-        uint8_t _primary_20_idx;
 };
 
 #endif
