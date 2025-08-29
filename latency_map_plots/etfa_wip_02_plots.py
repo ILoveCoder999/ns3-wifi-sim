@@ -10,10 +10,10 @@ plt.style.use('seaborn-v0_8-paper')
 sns.set_theme(style="whitegrid")
 
 # %%
-OUT_FOLDER = Path("/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps/plots")
+OUT_FOLDER = Path("/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps/plots_png")
 OUT_FOLDER.mkdir(parents=True, exist_ok=True)
 
-OUT_FORMAT = "pdf" #"png"
+OUT_FORMAT = "png" #"pdf"
 
 PLOT_METRICS = [
     "latency_avg",
@@ -27,14 +27,14 @@ PLOT_METRICS = [
 ]
 
 EXP_INFO = {
-    "optimal" : {
-        "folder": "/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps/constant",
-        "files" : {
-            "no_int": "map_00.csv",
-            "hidden": "map_01.csv",
-            "visible": "map_02.csv"
-        }
-    },
+    # "optimal" : {
+    #     "folder": "/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/etfa_wip_sim_maps/constant",
+    #     "files" : {
+    #         "no_int": "map_00.csv",
+    #         "hidden": "map_01.csv",
+    #         "visible": "map_02.csv"
+    #     }
+    # },
     "static" : {
         "folder": "/home/ptrchv/repos/ns3-wifi-sim/latency_map_plots/wfcs_sim_maps/maps",
         "files" : {
