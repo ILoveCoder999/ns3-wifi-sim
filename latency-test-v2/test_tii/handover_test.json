@@ -1,0 +1,48 @@
+{
+    "simTime": 60000,
+    "port": 9,
+    "payloadSize": 22,
+    "packetInterval": 0.03,
+    "doubleChannel": false,
+    "constantRate": false,
+    "channels": [
+      "{44,20,BAND_5GHZ,0}",
+      "{40,20,BAND_5GHZ,0}"
+    ],
+    "interferers": [
+      {
+        "position": {
+          "x": 130,
+          "y": 0,
+          "z": 0
+        },
+        "channel_idx": 0
+      }
+    ],
+    "tripTime": 300,
+    "repetitions": 100,
+    "staPosStart": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "staPosEnd": {
+      "x": 150,
+      "y": 0,
+      "z": 0
+    },
+    "apPositions": [
+      {
+        "x": 60,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "x": 90,
+        "y": 0,
+        "z": 0
+      }
+    ],
+    "enablePcap": false,
+    "enableAnimation": false
+}

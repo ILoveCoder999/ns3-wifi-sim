@@ -102,7 +102,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     simTime,
     port, payloadSize, packetInterval, doubleChannel, constantRate,
     channels, interferers,
-    tripTime, repetitions, staPosStart, staPosEnd,    
+    tripTime, repetitions, staPosStart, staPosEnd,
+    apPositions,
     enablePcap, enableAnimation
 );
 

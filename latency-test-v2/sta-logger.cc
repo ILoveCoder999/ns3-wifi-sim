@@ -165,9 +165,20 @@ void STALogger::droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu
         {
             info = it->second;
         }
-        else
+        // This is when packet is queued but never sent
+        else if (reason == WIFI_MAC_DROP_EXPIRED_LIFETIME)
         {
-            NS_FATAL_ERROR("Dropped packet was not sent");
+            std::ostringstream os;
+            os << mpdu->GetHeader().GetAddr1();
+            info.addr_1 = os.str();
+            Time latency = Simulator::Now() - seqTsHeader.GetTs();
+            info.acked = false;
+            info.latency = latency;
+            _output_file << ", " << std::endl << json(info);
+            return;
+        }
+        else {
+            NS_FATAL_ERROR("Dropped packet was not sent and did not expire");
         }
         Time latency = Simulator::Now() - seqTsHeader.GetTs();
         info.acked = false;

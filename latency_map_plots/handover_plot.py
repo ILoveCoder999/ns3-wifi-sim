@@ -6,8 +6,8 @@ import numpy as np
 from pathlib import Path
 
 # %%
-BASE_DIR = "handover_sim"
-EXP_DIR = "1ch_noint_60_90_high"
+BASE_DIR = "tii_sim_02"
+EXP_DIR = "sim_res"
 IMG_FORMAT = "png"
 
 # %%
@@ -19,14 +19,22 @@ class NoDataException(Exception):
     pass
 
 # %%
-with open("{}/data/{}/handover_assoc_log.json".format(BASE_DIR, EXP_DIR)) as f:
+with open("{}/data/{}/db_0_assoc.json".format(BASE_DIR, EXP_DIR)) as f:
     assoc_log = json.load(f)
 
-with open("{}/data/{}/handover_sta_log.json".format(BASE_DIR, EXP_DIR)) as f:
+with open("{}/data/{}/db_0_stalog.json".format(BASE_DIR, EXP_DIR)) as f:
     sta_log = json.load(f)
 
+header = sta_log[0]
 sta_log = sta_log[1:-1]
 assoc_log = assoc_log[1:]
+
+# %%
+print(header)
+x_pos_ap = tuple(pos["x"] for pos in header["apPositions"])
+x_pos_int = tuple(pos["position"]["x"] for pos in header["interferers"])
+print(x_pos_ap)
+print(x_pos_int)
 
 # %%
 POS_ROUNDING_SEP = 0
@@ -38,8 +46,8 @@ ASSOC_INTERVAL = 5
 # %%
 rows_sta = [
     {
-        "tx_time": r["transmissions"][0]["tx_time"], 
-        "pos": r["transmissions"][0]["position"][0],
+        "tx_time": r["transmissions"][0]["tx_time"] if r["transmissions"] else None,
+        "pos": r["transmissions"][0]["position"][0] if r["transmissions"] else None,
         "latency": r["latency"]/1000,
         "acked": r["acked"],
         "num_trans": len(r["transmissions"]),
@@ -124,6 +132,23 @@ def plot_assoc_deassoc(ax):
     for p in d_lines:
         ax.axvline(x=p, color="red")
 
+def plot_int_aps(ax, aps, int):
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+
+    ax.axvspan(max(aps[0]-51, xlim[0]), min(aps[0]+51, xlim[1]), color='C0', alpha=0.2, lw=0)
+    ax.axvspan(max(aps[1]-51, xlim[0]), min(aps[1]+51, xlim[1]), color='C1', alpha=0.2, lw=0)    
+
+    ax.plot(aps[0], ylim[0], 'o', color='C0', zorder=10, clip_on=False, markersize=10)
+    ax.plot(aps[1], ylim[0], 'o', color='C1', zorder=10, clip_on=False, markersize=10)
+
+    for i in int:
+        ax.plot(i, ylim[0], 'o', color='r', zorder=10, clip_on=False, markersize=10)
+        ax.plot([max(i-51, xlim[0]), min(i+51, xlim[1])], [ylim[0], ylim[0]],   color='r', zorder=9, alpha=0.4, clip_on=False, linewidth=6)
+
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+
 # %%
 fig, ax = plt.subplots()
 ax.plot(df_g1["pos"], df_g1["latency_mean"], label = "AP1 - Avg. latency")
@@ -136,6 +161,9 @@ ax.set_ylabel("Latency ($\mu$s)", fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 ax.legend(prop={'size': 12})
 plt.tight_layout()
+
+plot_int_aps(ax, x_pos_ap, x_pos_int)
+
 fig.savefig(plot_dir / "latency_avg.{}".format(IMG_FORMAT))
 
 # %%
@@ -150,6 +178,9 @@ ax.set_ylabel("Latency ($\mu$s)", fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 ax.legend(prop={'size': 12})
 plt.tight_layout()
+
+plot_int_aps(ax, x_pos_ap, x_pos_int)
+
 fig.savefig(plot_dir / "latency_99perc.{}".format(IMG_FORMAT))
 
 # %%
@@ -164,6 +195,9 @@ ax.set_ylabel("Latency ($\mu$s)", fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 ax.legend(prop={'size': 12})
 plt.tight_layout()
+
+plot_int_aps(ax, x_pos_ap, x_pos_int)
+
 fig.savefig(plot_dir / "latency_99.9perc.{}".format(IMG_FORMAT))
 
 # %%
@@ -171,13 +205,16 @@ fig, ax = plt.subplots()
 ax.plot(df_g1["pos"], df_g1["trans_num_mean"], label = "AP1 - Avg. attempts")
 ax.plot(df_g2["pos"], df_g2["trans_num_mean"], label = "AP2 - Avg. attempts")
 #ax.plot(df_tot["pos"], df_tot["trans_num_mean"])
-plot_assoc_deassoc(ax)
+#plot_assoc_deassoc(ax)
 
 ax.set_xlabel("SUT position $D_\mathrm{S}$ (m)", fontsize=16)#, rotation=-90, va="bottom")
 ax.set_ylabel("# Transmissions", fontsize=16)#, rotation=-90, va="bottom")
-ax.tick_params(axis='both', which='major', labelsize = 14)
+ax.tick_params(axis='both', which='major', labelsize = 16)
 ax.legend(prop={'size': 12})
 plt.tight_layout()
+
+plot_int_aps(ax, x_pos_ap, x_pos_int)
+
 fig.savefig(plot_dir / "attempts_avg.{}".format(IMG_FORMAT))
 
 # %%
@@ -192,6 +229,9 @@ ax.set_ylabel("Dropped (%)", fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 ax.legend(prop={'size': 12})
 plt.tight_layout()
+
+plot_int_aps(ax, x_pos_ap, x_pos_int)
+
 fig.savefig(plot_dir / "dropped_%.{}".format(IMG_FORMAT))
 
 # %%
@@ -213,6 +253,8 @@ ax.set_ylabel("SNR", fontsize=16)#, rotation=-90, va="bottom")
 ax.tick_params(axis='both', which='major', labelsize = 14)
 ax.legend(prop={'size': 12})
 plt.tight_layout()
+
+plot_int_aps(ax, x_pos_ap, x_pos_int)
 
 fig.savefig(plot_dir / "snr.{}".format(IMG_FORMAT))
 
