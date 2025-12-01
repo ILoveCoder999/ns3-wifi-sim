@@ -17,6 +17,8 @@ struct TransmissionInfo
     double tx_power_w;
     std::tuple<double, double, double> position;
     ns3::Time tx_time;
+    double rssi;
+    double noise;
 };
 
 inline void to_json(json& j, const TransmissionInfo& r)
@@ -28,6 +30,8 @@ inline void to_json(json& j, const TransmissionInfo& r)
             {"tx_power_w", r.tx_power_w},
             {"position", r.position},
             {"tx_time", r.tx_time.ToInteger(ns3::Time::Unit::NS)},
+            {"rssi", r.rssi},
+            {"noise", r.noise}
     };
 }
 

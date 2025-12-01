@@ -10,6 +10,7 @@
 #include "ns3/wifi-mpdu.h"
 #include "ns3/he-frame-exchange-manager.h"
 #include "ns3/mobility-model.h"
+#include "ns3/sta-wifi-mac.h"
 
 // custom
 #include "packet-info.h"
@@ -18,6 +19,11 @@ using namespace ns3;
 
 class STALogger
 {
+    struct SignalInfo {
+        double rssi;
+        double noise;
+    };
+
     public:
         STALogger(std::string out_file_path, std::string header, Ptr<WifiNetDevice> net_dev, Ptr<MobilityModel> mobility);
         ~STALogger() {};
@@ -37,14 +43,22 @@ class STALogger
         - to have tx power changes multiple power levels should be configured via WifiPhy
         - this also requires a rate control algorithms that tunes tx power (e.g. ns3::ParfWifiManager)
         */
-       void sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVector, double txPowerW); //PhyTxPsduBegin
+        void sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVector, double txPowerW); //PhyTxPsduBegin
+        /*
+        Callback to update snr value from received beacons
+        */
+        void monitorSnifferRxCallback(
+            Ptr< const Packet > packet, uint16_t channelFreqMhz, WifiTxVector txVector,
+            MpduInfo aMpdu, SignalNoiseDbm signalNoise, uint16_t staId
+        );
     
     protected:
         std::ofstream _output_file;
         std::string _header;       
         Ptr<WifiNetDevice> _net_dev;
         Ptr<MobilityModel> _mobility;
-        std::unordered_map<uint32_t, PacketInfo> _packets;        
+        std::unordered_map<uint32_t, PacketInfo> _packets;
+        std::unordered_map<std::string, SignalInfo> _ap_signal;
 };
 
 #endif

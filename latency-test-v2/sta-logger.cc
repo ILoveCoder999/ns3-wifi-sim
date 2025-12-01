@@ -79,6 +79,9 @@ void STALogger::sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVec
                 info.current_tx->rate = txVector.GetMode().GetDataRate(txVector);
                 info.current_tx->tx_power_w = txPowerW;
                 info.current_tx->tx_duration = WifiPhy::CalculateTxDuration(psdu, txVector, _net_dev->GetPhy()->GetPhyBand());
+                SignalInfo& signalInfo = _ap_signal.at(info.addr_1);
+                info.current_tx->rssi = signalInfo.rssi;
+                info.current_tx->noise = signalInfo.noise;
                 Vector position = _mobility->GetPosition();
                 info.current_tx->position = std::make_tuple(position.x, position.y, position.z);
                 info.current_tx->tx_time = Simulator::Now();
@@ -192,5 +195,20 @@ void STALogger::droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu
         }        
         _output_file << ", " << std::endl << json(info);
         _packets.erase(it, _packets.end());
+    }
+}
+
+void STALogger::monitorSnifferRxCallback(
+    Ptr< const Packet > packet, uint16_t channelFreqMhz, WifiTxVector txVector,
+    MpduInfo aMpdu, SignalNoiseDbm signalNoise, uint16_t staId)
+{
+    Ptr<Packet> p = packet->Copy();
+    WifiMacHeader wifiMacHeader;
+    if (p->GetSize() > 0 && p->RemoveHeader(wifiMacHeader)) {
+        if (wifiMacHeader.IsBeacon()) {
+            std::stringstream ss;
+            ss << wifiMacHeader.GetAddr2(); // source address in beacon frames (ToDs=0, FromDS=0)
+            _ap_signal.insert_or_assign(ss.str(), SignalInfo{signalNoise.signal, signalNoise.noise});
+        }          
     }
 }

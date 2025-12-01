@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
         conf_stream >> args;
     }
     else {
-        std::ifstream arg_file;  
+        std::ifstream arg_file;
         arg_file.open(jsonConfig.c_str(), std::ios::in);
         if(!arg_file)
         {
@@ -340,6 +340,11 @@ int main(int argc, char** argv) {
     ss.str(std::string());
     ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/Mac/DroppedMpdu";
     Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::droppedMpduCallback, &sta_logger));
+
+    // Tracing received beacons for both rssi, noise and snr
+    ss.str(std::string());
+    ss << "/NodeList/" << wifiStaNode.Get(0)->GetId() << "/DeviceList/0/$ns3::WifiNetDevice/Phy/MonitorSnifferRx";
+    Config::ConnectWithoutContext(ss.str(), MakeCallback(&STALogger::monitorSnifferRxCallback, &sta_logger));
 
     // Populate Arp Cache
     PopulateArpCache();
