@@ -4,7 +4,7 @@ from dataclasses import asdict
 
 configs = []
 
-simulationTime = 30000
+simulationTime = 3600
 
 
 def float_range(start: float, stop: float, step: float, inclusive=False):
@@ -57,8 +57,8 @@ simulations_2d = [
 ]
 
 for apNodes, interfererNodes in simulations_2d:
-    for staX in float_range(-50, 50, 2.5, inclusive=True):
-        for staY in float_range(-50, 50, 2.5, inclusive=True):
+    for staX in float_range(-50, 50, 1, inclusive=True):
+        for staY in float_range(-50, 50, 1, inclusive=True):
             configs.append(JsonConfig(
                 phyConfigs=[
                     SpectrumPhyConfig(
