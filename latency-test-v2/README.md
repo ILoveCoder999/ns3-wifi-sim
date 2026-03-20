@@ -1,5 +1,5 @@
 # Code information
-This file contains notes about the code in this folder
+This file contains notes about the code in this folder.
 
 ## ns3 documentation
 
