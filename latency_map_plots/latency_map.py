@@ -300,7 +300,6 @@ def main():
 
     plot_maps_1d(MAP_DIR, PLOT_DIR)
     
-    
     # export_latency_maps(CONF_FILE, EXP_DIR, MAP_DIR)
 
     # plot_lantency_maps(CONF_FILE, MAP_DIR, PLOT_DIR)
