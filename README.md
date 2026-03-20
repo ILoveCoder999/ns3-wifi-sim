@@ -1,6 +1,8 @@
 # Latency map
 
-## Install compiler
+## Installation
+
+### Install compiler
 On Linux, g++ can be installed from the distro repository.
 Then verify its installation:
 
@@ -8,7 +10,7 @@ Then verify its installation:
 g++ --version
 ```
 
-## Install CMake
+### Install CMake
 Install the latest version of [CMake](https://cmake.org/), downloading it from its website. This is recommended also for Linux since distro repositories can be very outdated. In this case download the .sh script (not the tar.gz file) and install it using the following command ([source](https://youtu.be/_yFPO1ofyF0?feature=shared)):
 
 ```bash
@@ -17,18 +19,13 @@ sudo sh nomefile.sh --prefix=/usr/local --exclude-subdir
 
 On Windows, during the installation phase, make sure to check the "Add variable to path" (or similar) option, otherwise you will have to do it manually.
 
-## Install Ninja (optional)
-This section is not complete
+### Install Ninja build (optional)
+
+### Download and build
+Download zip of ns-3 from its website, uncompress it and move into directory (in VScode open a new window).
 
 ```bash
-apt get ninja-build
-```
-
-## Download and build
-Download zip of NS3 from its website, uncompress it and move into directory (in VScode open a new window).
-
-```bash
-wget https://www.nsnam.org/release/ns-allinone-3.43.tar.bz2
+wget https://www.nsnam.org/release/ns-allinone-3.43.tar.bz2	# select the version you want
 tar xjf ns-allinone-3.43.tar.bz2
 cd ns-allinone-3.43/ns-3.43/
 ```
@@ -46,7 +43,15 @@ If you want to know the current configuration:
 ./ns3 show profile
 ```
 
-## Configure VSCode
+Run an executable by its name, e.g.:
+```bash
+./ns3 run latency-test-v2
+```
+
+Use ```optimized``` profile if you need fast execution.
+
+
+## VSCode configuration
 Install VSCode and add the following extensions:
 - C++
 - CMake language support (CMake Tools does not work well with ns3)
@@ -69,7 +74,7 @@ Now, with the source file of the executable open, the problem can be run.
 When asked to select the *"build option"* (e.g. default, debug, etc...) pick the same that was used for project configuration.
 As can be seen in the *program* string, this is part of the name of the executable to be run.
 
-### Limitations
+#### Limitations
 This build configuration uses as "preLaunchTask" to always build the executable before running it.
 As shown in the *task.json* file, this invokes the "./ns3" commmand that re-builds all the modified source files in the project (not only the one you want to run).
 
@@ -80,7 +85,7 @@ The extension functionality used by the debugger is specified in the *"type"* fi
 "type": "cppdbg"
 ```
 
-### Environmental variables
+#### Environmental variables
 
 To key-value enviromental variables append a new new dictionary containing the keys entries *name* and *value* to the *enviroment* list inside *launch.json*.
 As an example, this is how you can configure the logging level for a component:
@@ -92,7 +97,7 @@ As an example, this is how you can configure the logging level for a component:
 }
 ```
 
-### Command line arguments
+#### Command line arguments
 
 Just add the argument string to the *args* list in *launch.json*:
 
@@ -108,23 +113,35 @@ Just add the argument string to the *args* list in *launch.json*:
 ```
 
 
-## Traces
-
+### Traces
 For reading pcap file it is possible to use either tcpdump or Wireshard.
 
 ```bash
 tcpdump -nn -tt -r myfirst-0-0.pcap
 ```
-	
-PROBLEMI
-- se rimuovo build dal launch.json succede un casino (solo con cmaketools)
-- troppo lento a compilare (forse solo con cmaketools, che potrebbe limitare workers)
 
 
-## Latency experiments
+## Folder structure
+The development is done inside the ns-3 repository.
+Most of the folders and files are from the ns-3 codebase.
 
-### Observations
-- a the beginning of file more latency
+The following ones are the subset modified/used during development/usage:
+
+```bash
+.
+├── build				# binary of libraries and executables
+├── cmake-cache			# cache of cmake (build system) after configuration
+├── latency_map_plots	# python scripts for data analysis and plotting
+├── latency-test		# OLD folder by Matteo
+├── latency-test-v2		# source files for simulations are here
+├── CMakeLists.txt		# Cmake file (modified to include our source folders)
+├── ns3					# ns-3 CLI
+├── README.md			
+└── README_ns3.md		# Original readme of the ns-3 repository
+```
+
+```latency-test-v2``` and ```latency_map_plots``` contain README.md file to explain their content.
+
 
 ## Cluster configuration
 Use conda environments to install compiler required for ns-3 (the version on the cluster is outdated).
@@ -179,6 +196,10 @@ python -m submit_jobs BATCH_FILE BATCH_SIZE OUT_DIR # Use -1 for BATCH_SIZE to r
 - put step in configuration file
 - different types of interferent (connected, not connected)
 - metter a posto -1 e nan
+
+PROBLEMI
+- se rimuovo build dal launch.json succede un casino (solo con cmaketools)
+- troppo lento a compilare (forse solo con cmaketools, che potrebbe limitare workers)
 
 ## Simualazioni matteo
 - latency-test-2.cc vs latency_test.cc ??? (latency-test-v2/latency-test.cc is the one uses on the server!!!)
