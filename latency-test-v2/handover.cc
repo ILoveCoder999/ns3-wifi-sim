@@ -71,7 +71,8 @@ struct Interferer {
 };
 
 struct HandoverConfig {
-    double simTime = 60000;
+    //double simTime = 60000;
+    double simTime = 1200;
     
     uint32_t port = 9;
     uint32_t payloadSize = 22;
@@ -201,12 +202,12 @@ int main(int argc, char** argv) {
     wifi.SetStandard(WIFI_STANDARD_80211a);
     if (!sim_config.constantRate) {
         wifi.SetRemoteStationManager("ns3::MinstrelHtWifiManager",
-            "MaxSsrc", UintegerValue(21),
+            "MaxSsrc", UintegerValue(7),
             "RtsCtsThreshold", UintegerValue(4692480));
     }
     else {
         wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
-            "MaxSsrc", UintegerValue(21),
+            "MaxSsrc", UintegerValue(7),
             "RtsCtsThreshold", UintegerValue(4692480),
             "DataMode", StringValue("OfdmRate24Mbps"));
     }

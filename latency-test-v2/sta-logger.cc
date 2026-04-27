@@ -79,9 +79,11 @@ void STALogger::sendingMpduCallback(WifiConstPsduMap psduMap, WifiTxVector txVec
                 info.current_tx->rate = txVector.GetMode().GetDataRate(txVector);
                 info.current_tx->tx_power_w = txPowerW;
                 info.current_tx->tx_duration = WifiPhy::CalculateTxDuration(psdu, txVector, _net_dev->GetPhy()->GetPhyBand());
-                SignalInfo& signalInfo = _ap_signal.at(info.addr_1);
-                info.current_tx->rssi = signalInfo.rssi;
-                info.current_tx->noise = signalInfo.noise;
+                if (_ap_signal.find(info.addr_1) != _ap_signal.end()) {
+                    SignalInfo& signalInfo = _ap_signal.at(info.addr_1);
+                    info.current_tx->rssi = signalInfo.rssi;
+                    info.current_tx->noise = signalInfo.noise;
+                }
                 Vector position = _mobility->GetPosition();
                 info.current_tx->position = std::make_tuple(position.x, position.y, position.z);
                 info.current_tx->tx_time = Simulator::Now();
@@ -111,6 +113,12 @@ void STALogger::ackedMpduCallback(Ptr<const WifiMpdu> mpdu)
             NS_FATAL_ERROR("Acked packet was not sent");
         }
         Time latency = Simulator::Now() - seqTsHeader.GetTs();
+                // debug
+        /*
+        std::cout << "Latency in nanoseconds: " << latency.GetNanoSeconds() << " ns" << std::endl;
+        std::cout << "Latency in microseconds: " << latency.GetMicroSeconds() << " μs" << std::endl;
+        std::cout << "Latency in milliseconds: " << latency.GetMilliSeconds() << " ms" << std::endl;
+        */
         info.acked = true;
         info.latency = latency;
         info.current_tx->latency = latency;
@@ -177,6 +185,13 @@ void STALogger::droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu
             Time latency = Simulator::Now() - seqTsHeader.GetTs();
             info.acked = false;
             info.latency = latency;
+                    // debug
+        /*
+        std::cout << "Latency in nanoseconds: " << latency.GetNanoSeconds() << " ns" << std::endl;
+        std::cout << "Latency in microseconds: " << latency.GetMicroSeconds() << " μs" << std::endl;
+        std::cout << "Latency in milliseconds: " << latency.GetMilliSeconds() << " ms" << std::endl;
+        */
+
             _output_file << ", " << std::endl << json(info);
             return;
         }
@@ -186,6 +201,12 @@ void STALogger::droppedMpduCallback(WifiMacDropReason reason, Ptr<const WifiMpdu
         Time latency = Simulator::Now() - seqTsHeader.GetTs();
         info.acked = false;
         info.latency = latency;
+        // debug
+        /*
+        std::cout << "Latency in nanoseconds: " << latency.GetNanoSeconds() << " ns" << std::endl;
+        std::cout << "Latency in microseconds: " << latency.GetMicroSeconds() << " μs" << std::endl;
+        std::cout << "Latency in milliseconds: " << latency.GetMilliSeconds() << " ms" << std::endl;
+        */
         if (info.current_tx)
         {
             NS_LOG_DEBUG("Dropping transmission without timeout");
