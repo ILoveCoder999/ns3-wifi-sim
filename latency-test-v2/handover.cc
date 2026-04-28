@@ -72,7 +72,7 @@ struct Interferer {
 
 struct HandoverConfig {
     //double simTime = 60000;
-    double simTime = 1200;
+    double simTime = 600;
     
     uint32_t port = 9;
     uint32_t payloadSize = 22;
@@ -84,7 +84,7 @@ struct HandoverConfig {
     std::vector<Interferer> interferers = {};//{Interferer{}};
 
     double tripTime = 300;
-    uint32_t repetitions = 100;
+    uint32_t repetitions = 1;
     Position staPosStart = {0, 0, 0};
     Position staPosEnd = {150, 0, 0};
 
@@ -202,12 +202,12 @@ int main(int argc, char** argv) {
     wifi.SetStandard(WIFI_STANDARD_80211a);
     if (!sim_config.constantRate) {
         wifi.SetRemoteStationManager("ns3::MinstrelHtWifiManager",
-            "MaxSsrc", UintegerValue(7),
+            "MaxSsrc", UintegerValue(21),
             "RtsCtsThreshold", UintegerValue(4692480));
     }
     else {
         wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
-            "MaxSsrc", UintegerValue(7),
+            "MaxSsrc", UintegerValue(21),
             "RtsCtsThreshold", UintegerValue(4692480),
             "DataMode", StringValue("OfdmRate24Mbps"));
     }
