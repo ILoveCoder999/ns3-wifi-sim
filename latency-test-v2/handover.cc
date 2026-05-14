@@ -13,36 +13,22 @@
 #include <unordered_map>
 
 #include "ns3/application-container.h"
-#include "ns3/arp-cache.h"
 #include "ns3/command-line.h"
-#include "ns3/config.h"
-#include "ns3/double.h"
-#include "ns3/internet-stack-helper.h"
-#include "ns3/ipv4-address-helper.h"
-#include "ns3/ipv4-interface.h"
-#include "ns3/ipv4-l3-protocol.h"
-#include "ns3/llc-snap-header.h"
 #include "ns3/mobility-helper.h"
 #include "ns3/multi-model-spectrum-channel.h"
 #include "ns3/node-container.h"
-#include "ns3/node-list.h"
 #include "ns3/object-vector.h"
-#include "ns3/pointer.h"
 #include "ns3/rng-seed-manager.h"
-#include "ns3/seq-ts-header.h"
 #include "ns3/spectrum-wifi-helper.h"
 #include "ns3/ssid.h"
 #include "ns3/string.h"
 #include "ns3/udp-client-server-helper.h"
-#include "ns3/udp-header.h"
 #include "ns3/waypoint-mobility-model.h"
 #include "ns3/wifi-mac.h"
-#include "ns3/wifi-mpdu.h"
 #include "ns3/wifi-net-device.h"
 #include "ns3/csma-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/bridge-helper.h"
-
 #include "ns3/netanim-module.h"
 #include "ns3/timer.h"
 
@@ -71,6 +57,8 @@ struct Interferer {
 };
 
 struct HandoverConfig {
+    bool activeScanning = true;
+    bool differentChannels = false;
     //double simTime = 60000;
     double simTime = 600;
     
@@ -80,7 +68,9 @@ struct HandoverConfig {
     bool doubleChannel = false;
     bool constantRate = false;
 
-    std::vector<std::string> channels = {"{44,20,BAND_5GHZ,0}", "{40,20,BAND_5GHZ,0}"};
+    //std::vector<std::string> channels = {"{44,20,BAND_5GHZ,0}", "{40,20,BAND_5GHZ,0}"};
+    std::vector<std::string> channels = {"{1,20,BAND_24GHZ,0}", "{5,20,BAND_24GHZ,0}"};
+
     std::vector<Interferer> interferers = {};//{Interferer{}};
 
     double tripTime = 300;
@@ -90,7 +80,7 @@ struct HandoverConfig {
 
     std::vector<Position> apPositions = {Position{60, 0, 0}, Position{90, 0, 0}};
 
-    bool enablePcap = false;
+    bool enablePcap = true;
     bool enableAnimation = false;
 };
 
@@ -105,7 +95,9 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     channels, interferers,
     tripTime, repetitions, staPosStart, staPosEnd,
     apPositions,
-    enablePcap, enableAnimation
+    enablePcap, enableAnimation,
+    activeScanning,
+    differentChannels
 );
 
 inline std::ostream& operator<<(std::ostream& stream, const HandoverConfig& conf)
@@ -219,12 +211,32 @@ int main(int argc, char** argv) {
 
     WifiMacHelper wifiMac;
     wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
+    if (sim_config.activeScanning) {
+        // send Probe Request
+        wifiMac.SetType("ns3::StaWifiMac",
+                        "Ssid", SsidValue(Ssid("ssid_1")),
+                        "ActiveScanning", BooleanValue(true));
+    } else {
+        // listening Beacon
+        wifiMac.SetType("ns3::StaWifiMac",
+                        "Ssid", SsidValue(Ssid("ssid_1")),
+                        "ActiveScanning", BooleanValue(false),
+                        "BeaconGeneration", BooleanValue(true));
+    }
     staDevice = wifi.Install(spectrumPhyHelper, wifiMac, wifiStaNode);
 
     wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
     apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(0)));
     if (sim_config.doubleChannel) {
         spectrumPhyHelper.Set("ChannelSettings", StringValue(sim_config.channels.at(1)));
+    }
+    // 处理第二个 AP 的信道
+    if (sim_config.differentChannels) {
+        // 如果是异频切换，设置 PHY 使用 channels 列表中的第二个设置 (Ch 5)
+        spectrumPhyHelper.Set("ChannelSettings", StringValue(sim_config.channels.at(1)));
+    } else {
+        // 如果是同频切换，保持和 AP1 一样的设置 (Ch 1)
+        spectrumPhyHelper.Set("ChannelSettings", StringValue(sim_config.channels.at(0)));
     }
     apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(1)));
 
