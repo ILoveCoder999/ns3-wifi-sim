@@ -73,6 +73,13 @@ struct Interferer {
 struct HandoverConfig {
     //double simTime = 60000;
     double simTime = 600;
+    // ... 原有变量 ...
+    bool activeScanning = true;  // 新增：true 为主动扫描，false 为被动扫描
+    bool differentChannels = false; // 新增：是否使用不同信道 (AP1: Ch1, AP2: Ch5)
+
+    // 修改默认值以匹配你的手写笔记 (AP1 at 60, AP2 at 90)
+    std::vector<Position> apPositions = {Position{60, 0, 0}, Position{90, 0, 0}};
+    std::vector<std::string> channels = {"{1, 20, BAND_24GHZ, 0}", "{5, 20, BAND_24GHZ, 0}"};
     
     uint32_t port = 9;
     uint32_t payloadSize = 22;
@@ -80,8 +87,8 @@ struct HandoverConfig {
     bool doubleChannel = false;
     bool constantRate = false;
 
-    std::vector<std::string> channels = {"{44,20,BAND_5GHZ,0}", "{40,20,BAND_5GHZ,0}"};
-    std::vector<Interferer> interferers = {};//{Interferer{}};
+//  std::vector<std::string> channels = {"{44,20,BAND_5GHZ,0}", "{40,20,BAND_5GHZ,0}"};
+  //  std::vector<Interferer> interferers = {};//{Interferer{}};
 
     double tripTime = 300;
     uint32_t repetitions = 1;
@@ -218,14 +225,34 @@ int main(int argc, char** argv) {
     NetDeviceContainer interfererDevices;
 
     WifiMacHelper wifiMac;
-    wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
+    //wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
+    // --- 新增扫描模式设置 ---
+    if (sim_config.activeScanning) {
+        // 主动扫描：发送 Probe Request
+        wifiMac.SetType("ns3::StaWifiMac",
+                        "Ssid", SsidValue(Ssid("ssid_1")),
+                        "ActiveScanning", BooleanValue(true));
+    } else {
+        // 被动扫描：仅监听 Beacon
+        wifiMac.SetType("ns3::StaWifiMac",
+                        "Ssid", SsidValue(Ssid("ssid_1")),
+                        "ActiveScanning", BooleanValue(false),
+                        "BeaconGeneration", BooleanValue(true));
+    }
+    // -----------------------
     staDevice = wifi.Install(spectrumPhyHelper, wifiMac, wifiStaNode);
 
     wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
     apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(0)));
-    if (sim_config.doubleChannel) {
+    // 处理第二个 AP 的信道
+    if (sim_config.differentChannels) {
+        // 如果是异频切换，设置 PHY 使用 channels 列表中的第二个设置 (Ch 5)
         spectrumPhyHelper.Set("ChannelSettings", StringValue(sim_config.channels.at(1)));
+    } else {
+        // 如果是同频切换，保持和 AP1 一样的设置 (Ch 1)
+        spectrumPhyHelper.Set("ChannelSettings", StringValue(sim_config.channels.at(0)));
     }
+    apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(1)));
     apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(1)));
 
     // Configure and install STA Wifi on interferers
