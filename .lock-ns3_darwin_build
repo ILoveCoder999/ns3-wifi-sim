@@ -1,0 +1,31 @@
+#! /usr/bin/env python3
+
+launch_dir = '/Users/van/Desktop/dissertation/ns3-wifi-sim'
+run_dir = '/Users/van/Desktop/dissertation/ns3-wifi-sim'
+top_dir = '/Users/van/Desktop/dissertation/ns3-wifi-sim'
+out_dir = '/Users/van/Desktop/dissertation/ns3-wifi-sim/build'
+
+
+NS3_ENABLED_MODULES = ['ns3-wimax', 'ns3-wifi', 'ns3-virtual-net-device', 'ns3-uan', 'ns3-traffic-control', 'ns3-topology-read', 'ns3-stats', 'ns3-spectrum', 'ns3-sixlowpan', 'ns3-propagation', 'ns3-point-to-point-layout', 'ns3-point-to-point', 'ns3-olsr', 'ns3-nix-vector-routing', 'ns3-network', 'ns3-netanim', 'ns3-mobility', 'ns3-mesh', 'ns3-lte', 'ns3-lr-wpan', 'ns3-internet-apps', 'ns3-internet', 'ns3-flow-monitor', 'ns3-energy', 'ns3-dsr', 'ns3-dsdv', 'ns3-csma-layout', 'ns3-csma', 'ns3-core', 'ns3-config-store', 'ns3-buildings', 'ns3-bridge', 'ns3-applications', 'ns3-aodv', 'ns3-antenna', ]
+NS3_ENABLED_CONTRIBUTED_MODULES = []
+NS3_MODULE_PATH = ['/Users/van/opt/anaconda3/bin', '/Users/van/opt/anaconda3/condabin', '/usr/local/opt/openjdk@17/bin', '/usr/local/bin', '/System/Cryptexes/App/usr/bin', '/usr/bin', '/bin', '/usr/sbin', '/sbin', '/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin', '/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin', '/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin', '/opt/pmk/env/global/bin', '/Library/Apple/usr/bin', '/Library/TeX/texbin', '/Applications/VMware Fusion.app/Contents/Public', '/Users/van/Environment/apache-maven-3.9.6/bin', '/Applications/CLion.app/Contents/bin/ninja/mac/x64', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/lib']
+ENABLE_EXAMPLES = False
+ENABLE_TESTS = False
+ENABLE_OPENFLOW = False
+NSCLICK = False
+ENABLE_BRITE = False
+ENABLE_SUDO = False
+ENABLE_PYTHON_BINDINGS = False
+EXAMPLE_DIRECTORIES = []
+APPNAME = 'ns'
+BUILD_PROFILE = 'debug'
+VERSION = '3-dev' 
+BUILD_VERSION_STRING = '' 
+PYTHON = ['/Users/van/opt/anaconda3/bin/python3']
+VALGRIND_FOUND = False 
+
+
+ns3_runnable_programs = ['/Users/van/Desktop/dissertation/ns3-wifi-sim/build/reassociation_test/ns3-dev-reassociation_test-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/handover/ns3-dev-handover-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/latency-test-v2/ns3-dev-latency-test-v2-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/latency-test/ns3-dev-latency-test-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/fdr-error-rate-model/ns3-dev-fdr-error-rate-model-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/my-test-simulation/ns3-dev-my-test-simulation-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/utils/perf/ns3-dev-perf-io-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/utils/ns3-dev-print-introspected-doxygen-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/utils/ns3-dev-bench-packets-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/utils/ns3-dev-bench-scheduler-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/scratch/subdir/ns3-dev-scratch-subdir-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/scratch/nested-subdir/ns3-dev-scratch-nested-subdir-executable-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/build/scratch/ns3-dev-scratch-simulator-debug', '/Users/van/Desktop/dissertation/ns3-wifi-sim/cmake-build-debug/ns3-dev-stdlib_pch_exec-debug', ]
+
+ns3_runnable_scripts = []
+
