@@ -212,24 +212,23 @@ int main(int argc, char** argv) {
     WifiMacHelper wifiMac;
     wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
     if (sim_config.activeScanning) {
-        // send Probe Request
+        // 主动扫描：启用 ActiveProbing
         wifiMac.SetType("ns3::StaWifiMac",
                         "Ssid", SsidValue(Ssid("ssid_1")),
-                        "ActiveScanning", BooleanValue(true));
+                        "ActiveProbing", BooleanValue(true), // 注意：根据源码，属性名是 ActiveProbing
+                        "ProbeRequestTimeout", TimeValue(MilliSeconds(50)));
     } else {
-        // listening Beacon
+        // 被动扫描：关闭 ActiveProbing
         wifiMac.SetType("ns3::StaWifiMac",
                         "Ssid", SsidValue(Ssid("ssid_1")),
-                        "ActiveScanning", BooleanValue(false),
-                        "BeaconGeneration", BooleanValue(true));
+                        "ActiveProbing", BooleanValue(false),
+                        "WaitBeaconTimeout", TimeValue(MilliSeconds(120))); // 确保停留时间大于 AP 的 Beacon 间隔
     }
     staDevice = wifi.Install(spectrumPhyHelper, wifiMac, wifiStaNode);
 
     wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(Ssid("ssid_1")));
     apDevices.Add(wifi.Install(spectrumPhyHelper, wifiMac, wifiApNodes.Get(0)));
-    if (sim_config.doubleChannel) {
-        spectrumPhyHelper.Set("ChannelSettings", StringValue(sim_config.channels.at(1)));
-    }
+
     // 处理第二个 AP 的信道
     if (sim_config.differentChannels) {
         // 如果是异频切换，设置 PHY 使用 channels 列表中的第二个设置 (Ch 5)
