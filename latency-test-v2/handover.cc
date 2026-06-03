@@ -13,36 +13,22 @@
 #include <unordered_map>
 
 #include "ns3/application-container.h"
-#include "ns3/arp-cache.h"
 #include "ns3/command-line.h"
-#include "ns3/config.h"
-#include "ns3/double.h"
-#include "ns3/internet-stack-helper.h"
-#include "ns3/ipv4-address-helper.h"
-#include "ns3/ipv4-interface.h"
-#include "ns3/ipv4-l3-protocol.h"
-#include "ns3/llc-snap-header.h"
 #include "ns3/mobility-helper.h"
 #include "ns3/multi-model-spectrum-channel.h"
 #include "ns3/node-container.h"
-#include "ns3/node-list.h"
 #include "ns3/object-vector.h"
-#include "ns3/pointer.h"
 #include "ns3/rng-seed-manager.h"
-#include "ns3/seq-ts-header.h"
 #include "ns3/spectrum-wifi-helper.h"
 #include "ns3/ssid.h"
 #include "ns3/string.h"
 #include "ns3/udp-client-server-helper.h"
-#include "ns3/udp-header.h"
 #include "ns3/waypoint-mobility-model.h"
 #include "ns3/wifi-mac.h"
-#include "ns3/wifi-mpdu.h"
 #include "ns3/wifi-net-device.h"
 #include "ns3/csma-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/bridge-helper.h"
-
 #include "ns3/netanim-module.h"
 #include "ns3/timer.h"
 
@@ -71,6 +57,8 @@ struct Interferer {
 };
 
 struct HandoverConfig {
+    bool activeScanning = true;
+    bool differentChannels = false;
     //double simTime = 60000;
     double simTime = 600;
     // ... 原有变量 ...
@@ -97,7 +85,7 @@ struct HandoverConfig {
 
     std::vector<Position> apPositions = {Position{60, 0, 0}, Position{90, 0, 0}};
 
-    bool enablePcap = false;
+    bool enablePcap = true;
     bool enableAnimation = false;
 };
 
@@ -112,7 +100,9 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     channels, interferers,
     tripTime, repetitions, staPosStart, staPosEnd,
     apPositions,
-    enablePcap, enableAnimation
+    enablePcap, enableAnimation,
+    activeScanning,
+    differentChannels
 );
 
 inline std::ostream& operator<<(std::ostream& stream, const HandoverConfig& conf)
