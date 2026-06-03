@@ -1,2 +1,2 @@
-scenario,schedule,fanin,sent,delivered,dropped
-relaycongest,1,64,4096,4096,0
+scenario,schedule,fanin,sent,delivered,dropped,throughput_Gbps,total_energy_J,avg_power_W
+uniform,1,64,199335,199335,0,8.19204,1.21265e+06,808430

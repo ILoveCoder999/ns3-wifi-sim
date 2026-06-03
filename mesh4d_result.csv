@@ -1,2 +1,2 @@
 scenario,schedule,sent,delivered,dropped,throughput_Gbps,total_energy_J,avg_power_W
-uniform,1,199856,199856,0,16.384,4.79102e+06,3.19402e+06
+uniform,1,199838,199838,0,16.3841,4.66497e+06,3.10998e+06
