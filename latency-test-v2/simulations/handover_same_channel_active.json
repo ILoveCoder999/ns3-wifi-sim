@@ -1,7 +1,7 @@
 {
   "activeScanning": true,
-  "differentChannels": true,
-  "simTime": 75,
+  "differentChannels": false,
+  "simTime": 150,
   "tripTime": 75,
   "repetitions": 1,
   "channels": ["{36,20,BAND_5GHZ,0}", "{40,20,BAND_5GHZ,0}"],

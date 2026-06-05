@@ -1,0 +1,771 @@
+(base) xi@in:~/ns3-wifi-sim/scratch/rang_randomNetworkGraphpaper$ ./run-fig13-test.sh
+正在针对 fat-tree-sim 进行单体无冲突编译...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Finished executing the following commands:
+/home/xi/.local/bin/cmake --build /home/xi/ns3-wifi-sim/cmake-build-debug -j 47 --target scratch_rang_randomNetworkGraphpaper_fat_tree_sim
+==================================================
+开始自动化重新测试：复现 Figure 13 过订阅比曲线
+==================================================
+正在运行场景: scenario=clique, f=0.05 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.050000)
+  Sent / Delivered   : 126000 / 40989 (Dropped: 85011)
+  CNP Sent/Recv      : 218 / 117
+  CE Packets         : 11136
+  Theory Demand      : 700 Gbps
+  Realized Tput      : 206.989 Gbps
+  Oversubscription   : 3.38182   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 114.093 µs / 203.86 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.1 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.100000)
+  Sent / Delivered   : 468000 / 131523 (Dropped: 336477)
+  CNP Sent/Recv      : 1054 / 873
+  CE Packets         : 29115
+  Theory Demand      : 1300 Gbps
+  Realized Tput      : 235.237 Gbps
+  Oversubscription   : 5.52635   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 78.6685 µs / 164.565 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.2 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.200000)
+  Sent / Delivered   : 1950000 / 518252 (Dropped: 1431748)
+  CNP Sent/Recv      : 5486 / 5243
+  CE Packets         : 81248
+  Theory Demand      : 2600 Gbps
+  Realized Tput      : 433.414 Gbps
+  Oversubscription   : 5.99888   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 53.1726 µs / 157.4 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.3 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.300000)
+  Sent / Delivered   : 4446000 / 1139706 (Dropped: 3306294)
+  CNP Sent/Recv      : 14203 / 13878
+  CE Packets         : 158691
+  Theory Demand      : 3900 Gbps
+  Realized Tput      : 516.197 Gbps
+  Oversubscription   : 7.55526   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 46.17 µs / 150.766 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.4 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.400000)
+  Sent / Delivered   : 7956000 / 1972550 (Dropped: 5983450)
+  CNP Sent/Recv      : 27588 / 27209
+  CE Packets         : 260413
+  Theory Demand      : 5200 Gbps
+  Realized Tput      : 540.166 Gbps
+  Oversubscription   : 9.62668   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 44.2503 µs / 144.632 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.5 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.500000)
+  Sent / Delivered   : 12096000 / 2847410 (Dropped: 9248590)
+  CNP Sent/Recv      : 64044 / 63048
+  CE Packets         : 495518
+  Theory Demand      : 6400 Gbps
+  Realized Tput      : 525.19 Gbps
+  Oversubscription   : 12.1861   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 69.9956 µs / 145.91 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.6 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.600000)
+  Sent / Delivered   : 17556000 / 4020565 (Dropped: 13535435)
+  CNP Sent/Recv      : 109843 / 108239
+  CE Packets         : 719857
+  Theory Demand      : 7700 Gbps
+  Realized Tput      : 525.085 Gbps
+  Oversubscription   : 14.6643   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 70.7892 µs / 146.555 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.7 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.700000)
+  Sent / Delivered   : 24030000 / 5319212 (Dropped: 18710788)
+  CNP Sent/Recv      : 206135 / 203452
+  CE Packets         : 1138928
+  Theory Demand      : 9000 Gbps
+  Realized Tput      : 513.352 Gbps
+  Oversubscription   : 17.5318   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 97.7795 µs / 146.354 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.8 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.800000)
+  Sent / Delivered   : 31518000 / 6896702 (Dropped: 24621298)
+  CNP Sent/Recv      : 431894 / 425753
+  CE Packets         : 1929875
+  Theory Demand      : 10300 Gbps
+  Realized Tput      : 538.048 Gbps
+  Oversubscription   : 19.1433   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 113.07 µs / 142.155 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=0.9 ...
+[0/2] Re-checking globbed directories...
+[2/3] Linking CXX executable /home/xi/ns3-wifi-sim/b...g_randomNetworkGraphpaper/ns3-dev-fat_tree_sim-debug
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=0.900000)
+  Sent / Delivered   : 40020000 / 8223476 (Dropped: 31796524)
+  CNP Sent/Recv      : 770721 / 755560
+  CE Packets         : 3347772
+  Theory Demand      : 11600 Gbps
+  Realized Tput      : 639.126 Gbps
+  Oversubscription   : 18.1498   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 123.372 µs / 141.105 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=clique, f=1.0 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: clique
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : clique (f=1.000000)
+  Sent / Delivered   : 48768000 / 9321293 (Dropped: 39446707)
+  CNP Sent/Recv      : 962421 / 941709
+  CE Packets         : 3972465
+  Theory Demand      : 12800 Gbps
+  Realized Tput      : 728.819 Gbps
+  Oversubscription   : 17.5627   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 125.337 µs / 141.736 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.05 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.050000)
+  Sent / Delivered   : 2667000 / 822716 (Dropped: 1844284)
+  CNP Sent/Recv      : 28382 / 27310
+  CE Packets         : 400300
+  Theory Demand      : 700 Gbps
+  Realized Tput      : 549.315 Gbps
+  Oversubscription   : 1.27431   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 184.126 µs / 301.893 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.1 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.100000)
+  Sent / Delivered   : 4953000 / 1545957 (Dropped: 3407043)
+  CNP Sent/Recv      : 12203 / 12011
+  CE Packets         : 294763
+  Theory Demand      : 1300 Gbps
+  Realized Tput      : 638.128 Gbps
+  Oversubscription   : 2.03721   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 67.9309 µs / 164.076 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.2 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.200000)
+  Sent / Delivered   : 9906000 / 2742506 (Dropped: 7163494)
+  CNP Sent/Recv      : 28962 / 28709
+  CE Packets         : 408130
+  Theory Demand      : 2600 Gbps
+  Realized Tput      : 618.047 Gbps
+  Oversubscription   : 4.2068   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 50.4931 µs / 156.5 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.3 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.300000)
+  Sent / Delivered   : 14859000 / 3873923 (Dropped: 10985077)
+  CNP Sent/Recv      : 48075 / 47748
+  CE Packets         : 525986
+  Theory Demand      : 3900 Gbps
+  Realized Tput      : 600.617 Gbps
+  Oversubscription   : 6.49332   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 45.0925 µs / 150.177 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.4 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.400000)
+  Sent / Delivered   : 19812000 / 4953539 (Dropped: 14858461)
+  CNP Sent/Recv      : 69126 / 68752
+  CE Packets         : 645283
+  Theory Demand      : 5200 Gbps
+  Realized Tput      : 585.068 Gbps
+  Oversubscription   : 8.88785   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 46.0158 µs / 144.199 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.5 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.500000)
+  Sent / Delivered   : 24384000 / 5810144 (Dropped: 18573856)
+  CNP Sent/Recv      : 138767 / 137488
+  CE Packets         : 1035876
+  Theory Demand      : 6400 Gbps
+  Realized Tput      : 557.756 Gbps
+  Oversubscription   : 11.4746   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 70.2122 µs / 146.99 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.6 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.600000)
+  Sent / Delivered   : 29337000 / 6738352 (Dropped: 22598648)
+  CNP Sent/Recv      : 184899 / 183391
+  CE Packets         : 1199062
+  Theory Demand      : 7700 Gbps
+  Realized Tput      : 541.114 Gbps
+  Oversubscription   : 14.2299   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 71.7792 µs / 148.38 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.7 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.700000)
+  Sent / Delivered   : 34290000 / 7578839 (Dropped: 26711161)
+  CNP Sent/Recv      : 296958 / 293715
+  CE Packets         : 1626051
+  Theory Demand      : 9000 Gbps
+  Realized Tput      : 593.102 Gbps
+  Oversubscription   : 15.1745   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 98.931 µs / 148.665 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.8 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.800000)
+  Sent / Delivered   : 39243000 / 8481779 (Dropped: 30761221)
+  CNP Sent/Recv      : 524652 / 516535
+  CE Packets         : 2367374
+  Theory Demand      : 10300 Gbps
+  Realized Tput      : 662.954 Gbps
+  Oversubscription   : 15.5365   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 114.067 µs / 146.879 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=0.9 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=0.900000)
+  Sent / Delivered   : 44196000 / 9017419 (Dropped: 35178581)
+  CNP Sent/Recv      : 846307 / 829869
+  CE Packets         : 3662567
+  Theory Demand      : 11600 Gbps
+  Realized Tput      : 699.528 Gbps
+  Oversubscription   : 16.5826   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 123.884 µs / 149.076 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=hubs, f=1.0 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: hubs
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : hubs (f=1.000000)
+  Sent / Delivered   : 48768000 / 9257271 (Dropped: 39510729)
+  CNP Sent/Recv      : 961200 / 941451
+  CE Packets         : 3958627
+  Theory Demand      : 12800 Gbps
+  Realized Tput      : 723.537 Gbps
+  Oversubscription   : 17.6909   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 126.205 µs / 148.634 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.05 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.050000)
+  Sent / Delivered   : 18000 / 18000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 600 Gbps
+  Realized Tput      : 517.38 Gbps
+  Oversubscription   : 1.15969   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.79678 µs / 7.741 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.1 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.100000)
+  Sent / Delivered   : 36000 / 36000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 1200 Gbps
+  Realized Tput      : 893.443 Gbps
+  Oversubscription   : 1.34312   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.87719 µs / 7.852 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.2 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.200000)
+  Sent / Delivered   : 78000 / 78000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 2600 Gbps
+  Realized Tput      : 1468.83 Gbps
+  Oversubscription   : 1.77012   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.83738 µs / 7.917 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.3 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.300000)
+  Sent / Delivered   : 114000 / 114000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 3800 Gbps
+  Realized Tput      : 1778.56 Gbps
+  Oversubscription   : 2.13656   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.88892 µs / 7.951 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.4 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.400000)
+  Sent / Delivered   : 156000 / 156000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 5200 Gbps
+  Realized Tput      : 2027.8 Gbps
+  Oversubscription   : 2.56435   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.88706 µs / 7.95 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.5 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.500000)
+  Sent / Delivered   : 192000 / 192000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 6400 Gbps
+  Realized Tput      : 2183.24 Gbps
+  Oversubscription   : 2.93142   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.90609 µs / 7.995 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.6 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.600000)
+  Sent / Delivered   : 228000 / 228000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 7600 Gbps
+  Realized Tput      : 2305.27 Gbps
+  Oversubscription   : 3.29679   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.91196 µs / 8.024 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.7 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.700000)
+  Sent / Delivered   : 270000 / 270000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 9000 Gbps
+  Realized Tput      : 2417.22 Gbps
+  Oversubscription   : 3.72329   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.98408 µs / 10.402 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.8 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.800000)
+  Sent / Delivered   : 306000 / 306000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 10200 Gbps
+  Realized Tput      : 2493.95 Gbps
+  Oversubscription   : 4.0899   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.9823 µs / 10.108 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=0.9 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=0.900000)
+  Sent / Delivered   : 348000 / 348000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 11600 Gbps
+  Realized Tput      : 2567.64 Gbps
+  Oversubscription   : 4.51776   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.98435 µs / 9.956 µs
+===========================================
+
+--------------------------------------------------
+正在运行场景: scenario=matching, f=1.0 ...
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+=== 3-Tier Fat-Tree + RoCEv2 (DCQCN), K=8 ===
+  Total Nodes: 128 servers
+  Active Scenario: matching
+  Link: 100Gbps / 200ns
+  Lossless Queue: 1024p | ECN RED: 100/300p
+
+  Running NS3 Simulation Framework...
+
+================= RESULTS =================
+  Scenario Mode      : matching (f=1.000000)
+  Sent / Delivered   : 384000 / 384000 (Dropped: 0)
+  CNP Sent/Recv      : 0 / 0
+  CE Packets         : 0
+  Theory Demand      : 12800 Gbps
+  Realized Tput      : 2621.07 Gbps
+  Oversubscription   : 4.8835   <-- (Figure 13 纵轴指标)
+  Latency (Mean/p99) : 4.98602 µs / 9.804 µs
+===========================================
+
+--------------------------------------------------
+==================================================
+测试全部完成！结果已追加保存至: fattree_all_scenarios_result.csv
+==================================================
